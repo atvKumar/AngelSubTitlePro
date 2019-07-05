@@ -4,6 +4,7 @@ from PySide2.QtCore import Qt, Slot
 from PySide2.QtWidgets import (QWidget, QApplication, QMainWindow, QDockWidget, 
 QSizePolicy, QTableWidget, QMenu, QAction)
 from editPanel import subTitleEdit
+from videoPanel import vlcPlayer
 
 __version__ = "alpha Pre-Release"
 __major__ = 0
@@ -50,6 +51,9 @@ class MainWindow(QMainWindow):
         self.actShowT.triggered.connect(self.showTitleBar)
         self.actHideT = QAction("Hide TitleBar", self)
         self.actHideT.triggered.connect(self.hideTitleBar)
+        # VLC Player
+        self.videoPanel = vlcPlayer()
+        self.dock1.setWidget(self.videoPanel)
 
     def updateStatusBar(self, message):
         self.sb.showMessage(message)
@@ -70,19 +74,6 @@ class MainWindow(QMainWindow):
         self.dock2.setTitleBarWidget(self.noTitle2)
         self.dock3.setTitleBarWidget(self.noTitle3)
         self.repaint()
-        
-
-    # @Slot()
-    # def printMsg1(self):
-    #     print("Button1 Pressed!")
-
-    # @Slot()
-    # def printMsg2(self):
-    #     print("Button2 Pressed!")
-
-    # @Slot()
-    # def printMsg3(self):
-    #     print("Button3 Pressed!")
 
 
 if __name__ == '__main__':

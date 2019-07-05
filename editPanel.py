@@ -2,10 +2,8 @@ from PySide2.QtWidgets import (QWidget, QVBoxLayout, QPushButton, QHBoxLayout,
 QLineEdit, QSpinBox, QTextEdit)
 from PySide2.QtCore import Signal, Slot
 
+
 class subTitleEdit(QWidget):
-    # btn1Clicked = Signal()
-    # btn2Clicked = Signal()
-    # btn3Clicked = Signal()
     def __init__(self):
         super(subTitleEdit, self).__init__()
         self.initUI()
@@ -37,19 +35,8 @@ class subTitleEdit(QWidget):
         mainlayout.addLayout(subLayout)
         # Add Next Line Controls
         txtSubTitle = QTextEdit()
+        txtSubTitle.setMaximumHeight(100)
         mainlayout.addWidget(txtSubTitle)
         # Layout Operations
         self.setLayout(mainlayout)
         self.show()
-    
-    # @Slot()
-    # def _btn1Slot(self):
-    #     self.btn1Clicked.emit()
-    
-    # @Slot()
-    # def _btn2Slot(self):
-    #     self.btn2Clicked.emit()
-
-    # @Slot()
-    # def _btn3Slot(self):
-    #     self.btn3Clicked.emit()

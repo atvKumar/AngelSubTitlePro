@@ -1,3 +1,5 @@
+from math import floor
+
 class TimeCode(object):
 
     def __init__(self, Timecode="00:00:00:00"):  # Default Variables
@@ -6,6 +8,7 @@ class TimeCode(object):
         self.hrs = 0
         self.mins = 0
         self.secs = 0
+        self.ms = 0
         self.frms = 0
         # self.timecode = "00:00:00:00"
         self.setTimeCode(Timecode)
@@ -29,7 +32,19 @@ class TimeCode(object):
         return self.mins
 
     def setSecs(self, secs):
-        self.secs = secs
+        if isinstance(secs, float):
+            sec, ms = str(secs).split(".")
+            self.secs = int(sec)
+            self.ms = int(ms)
+            frames = self.msToFrames(self.ms)
+            self.frames = frames + (self.secs * self.framerate)
+            self.frames_to_tc()
+            self.timecode = self.getTimeCode()
+        elif isinstance(secs, int):
+            self.secs = secs
+            self.frames = secs * self.framerate
+            self.frames_to_tc()
+            self.timecode = self.getTimeCode()
 
     def getSecs(self):
         return self.secs
@@ -65,6 +80,9 @@ class TimeCode(object):
         self.secs = ((self.frames % (3600 * self.framerate)) % (60 * self.framerate)) // self.framerate
         self.frms = ((self.frames % (3600 * self.framerate)) % (60 * self.framerate)) % self.framerate
         self.timecode = self.getTimeCode()
+    
+    def msToFrames(self, ms):
+        return int(round(float(self.framerate) / 1000 * float(ms)))
 
     def __str__(self):
         return self.timecode
