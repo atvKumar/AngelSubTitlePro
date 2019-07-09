@@ -81,6 +81,14 @@ class TimeCode(object):
         self.frms = ((self.frames % (3600 * self.framerate)) % (60 * self.framerate)) % self.framerate
         self.timecode = self.getTimeCode()
     
+    def secs_to_tc(self, secs):  # Adapted from http://www.gummydev.com/timecode/
+        total_seconds = max(0, round(secs))
+        seconds = total_seconds % 60
+        minutes = floor(total_seconds / 60) % 60
+        hours = floor(total_seconds / (60*60))
+        frames = self.msToFrames(str(secs).split(".")[1])
+        self.timecode = f"{hours:02}:{minutes:02}:{seconds:02}:{frames:02}"
+
     def msToFrames(self, ms):
         return int(round(float(self.framerate) / 1000 * float(ms)))
 
