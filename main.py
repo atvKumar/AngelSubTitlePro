@@ -53,8 +53,10 @@ class MainWindow(QMainWindow):
         self.actHideT.triggered.connect(self.hideTitleBar)
         # VLC Player
         self.videoPanel = vlcPlayer()
+        self.videoPanel.message.connect(self.updateStatusBar)
         self.dock1.setWidget(self.videoPanel)
-
+    
+    @Slot(str)
     def updateStatusBar(self, message):
         self.sb.showMessage(message)
     

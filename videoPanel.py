@@ -4,10 +4,11 @@ from math import floor
 from time import sleep
 from PySide2.QtWidgets import (QWidget, QLabel, QVBoxLayout, QPushButton, 
 QHBoxLayout, QSlider)
-from PySide2.QtCore import Signal, Slot, QSize, Qt
+from PySide2.QtCore import Signal, Slot, QSize, Qt, QTimer
 from PySide2.QtGui import QPixmap, QIcon
 from vlc import EventType
 from timecode import TimeCode
+from ctypes import ArgumentError
 import vlc, sys
 
 
@@ -33,9 +34,20 @@ class video_frame(QLabel):
 
 
 class vlcPlayer(QWidget):
+    message = Signal(str)
     def __init__(self):
         super(vlcPlayer, self).__init__()
         self.vlc_instance = vlc.Instance("-q") # '--verbose 2'.split()
+        self.mPlayer = self.vlc_instance.media_player_new()
+        self.event_manager = self.mPlayer.event_manager()
+        self.fileParsed = False
+        self.isPlaying = False
+        self.isSeekable = False
+        self.event_manager.event_attach(EventType.MediaPlayerTimeChanged, self.vlc_event_handle_timeChanged)
+        self.event_manager.event_attach(EventType.MediaPlayerPlaying, self.vlc_event_handle_MediaPlaying)
+        self.event_manager.event_attach(EventType.MediaPlayerPaused, self.vlc_event_handle_MediaPaused)
+        self.event_manager.event_attach(EventType.MediaPlayerEndReached, self.vlc_event_handle_MediaEnded)
+        self.timer = QTimer(self)
         self.initUI()
     
     def initUI(self):
@@ -47,15 +59,14 @@ class vlcPlayer(QWidget):
         videoFrame = video_frame()
         mainlayout.addWidget(videoFrame)
         vframeID = videoFrame.winId()
-        # Connect to Slot
-        videoFrame.fileDroped.connect(self.loadVideoFile)
-        self.mPlayer = self.vlc_instance.media_player_new()
         if sys.platform.startswith('linux'):  # linux
             self.mPlayer.set_xwindow(vframeID)
         elif sys.platform == "win32":  # windows
             self.mPlayer.set_hwnd(vframeID)
         elif sys.platform == "darwin":  # mac
             self.mPlayer.set_nsobject(vframeID)
+        # Connect to Slot
+        videoFrame.fileDroped.connect(self.loadVideoFile)
         vctrl_layout = QHBoxLayout()
         # Previous Frame
         btn_pf = QPushButton()
@@ -69,6 +80,10 @@ class vlcPlayer(QWidget):
         ico_re = QIcon(QPixmap("icons/rewind.png"))
         btn_rewind.setIcon(ico_re)
         btn_rewind.clicked.connect(self.rewind)
+        # btn_rewind.release.connect(self.playVideo)
+        btn_rewind.setAutoRepeat(True)
+        btn_rewind.setAutoRepeatInterval(1000)
+        btn_rewind.setAutoRepeatDelay(1000)
         # Play
         btn_play = QPushButton()
         btn_play.setFixedSize(QSize(32, 32))
@@ -94,9 +109,13 @@ class vlcPlayer(QWidget):
         btn_nf.setIcon(ico_nf)
         btn_nf.clicked.connect(self.nextFrame)
         # Video Lenght Slider
-        self.vlenght = QSlider(Qt.Orientation.Horizontal)
-        self.vlenght.setMinimum(0)
-        self.vlenght.setMaximum(1000)  # Rough
+        self.video_slider = QSlider(Qt.Orientation.Horizontal)
+        self.video_slider.setMinimum(0)
+        self.video_slider.setMaximum(1000)  # Rough
+        # self.video_slider.sliderPressed.connect(self.pauseVideo)
+        self.video_slider.sliderMoved.connect(self.vslider_moved)
+        self.video_slider.sliderReleased.connect(self.vslider_released)
+        # self.video_slider.valueChanged.connect(self.sliderChanged)
         # Duration
         self.tcPos = QLabel("00:00:00:00")
         self.tcPos.setMaximumHeight(20)
@@ -107,73 +126,92 @@ class vlcPlayer(QWidget):
         vctrl_layout.addWidget(btn_pause)
         vctrl_layout.addWidget(btn_ff)
         vctrl_layout.addWidget(btn_nf)
-        vctrl_layout.addWidget(self.vlenght)
-        # vctrl_layout.addWidget(tcIn)
-        # vctrl_layout.addWidget(tcOut)
+        vctrl_layout.addWidget(self.video_slider)
         vctrl_layout.addWidget(self.tcPos)
         mainlayout.addLayout(vctrl_layout, 1)
         self.setLayout(mainlayout)
         self.show()
-        # Disabled until further notice
-        # btn_nf.setDisabled(True)
-        # btn_pf.setDisabled(True)
-        btn_rewind.setDisabled(True)
+        self.timer.setInterval(200)
+        self.timer.timeout.connect(self.vslider_posUpdate)
+        # Disable Controls
+        # btn_rewind.setDisabled(True)
     
     @Slot(str)
     def loadVideoFile(self, videoFile):
-        # print("Video File:", videoFile)
+        self.fileParsed = False
         t_media = self.vlc_instance.media_new(videoFile)
         self.mPlayer.set_media(t_media)
         self.mPlayer.video_set_aspect_ratio(b"16:9")
-        # self.mPlayer.play()
-        t_media.parse() # Depreciated : Async parse_with_options()
-        # print("Video Duration:", t_media.get_duration())
-        self.dur = t_media.get_duration()/1000
-        # print(dur, floor(self.dur))
-        vidDur = TimeCode()
-        vidDur.setSecs(self.dur)
-        self.vlenght.setMaximum(floor(self.dur))
-        self.tcPos.setText(vidDur.getTimeCode())
+        t_media.parse_with_options(1,0)
+        sleep(1) # Time to parse video
+        if t_media.get_parsed_status() == vlc.MediaParsedStatus().done:
+            self.fileParsed = True
+            self.message.emit(f"{path.basename(videoFile)} Loaded!")
+        self.dur = t_media.get_duration()/1000  # video duration in seconds
+        self.video_duration = TimeCode()
+        self.video_duration.setSecs(self.dur)
+        # self.video_slider.setMaximum(floor(self.dur))
+        self.tcPos.setText(self.video_duration.getTimeCode())
     
-    def vlc_event_handle_timeChanged(self, event):
-        if event.type == EventType.MediaPlayerTimeChanged:
-            newPos = self.mPlayer.get_time()/1000
-            newTC = TimeCode()
-            newTC.setSecs(newPos)
-            self.tcPos.setText(newTC.timecode)
-            self.vlenght.setSliderPosition(floor(newPos))
+    def getPosition(self):  # More accurate video position
+        newPos = self.mPlayer.get_time()/1000
+        self.currPos = TimeCode()
+        self.currPos.setSecs(newPos)
+        return newPos
     
+    def vlc_event_handle_timeChanged(self, event): # MediaPlayerTimeChanged
+        self.getPosition()
+        self.tcPos.setText(self.currPos.timecode)
+    
+    def vlc_event_handle_MediaParsed(self, event): # vlc ParseChanged event never fires
+        pass
+    
+    def vlc_event_handle_MediaPlaying(self, event): # MediaPlayerPlaying
+        # Processing event.u causes Segmentation 11 errors
+        self.isPlaying = True
+        self.message.emit(f"Video Playing!")
+    
+    def vlc_event_handle_MediaPaused(self, event): # MediaPlayerPaused
+        self.isPlaying = False
+        self.message.emit(f"Video Paused!")
+    
+    def vlc_event_handle_MediaEnded(self, event): # MediaPlayerEndReached
+        self.isPlaying = False
+        self.isSeekable = False
+        self.message.emit("Video End Reached!")
+
     def playVideo(self):
-        self.event_manager = self.mPlayer.event_manager()
-        self.event_manager.event_attach(EventType.MediaPlayerTimeChanged, self.vlc_event_handle_timeChanged)
-        if not self.mPlayer.is_playing():
+        if not self.isPlaying:
             self.mPlayer.play()
+            self.timer.start()
+            if self.isSeekable == False: # Check once
+                if self.mPlayer.is_seekable() == 1:
+                    self.isSeekable = True
+            sleep(1)
         else:
             self.mPlayer.set_rate(1.0)
     
     def pauseVideo(self):
-        if self.mPlayer.is_playing() and self.mPlayer.can_pause():
+        if self.isPlaying and self.mPlayer.can_pause():
             self.mPlayer.pause()
+            self.timer.stop()
             self.mPlayer.set_rate(1.0)
     
     def nextFrame(self):
-        if not self.mPlayer.is_playing() and self.mPlayer.is_seekable() == 1:
+        if not self.isPlaying and self.isSeekable:
             self.mPlayer.next_frame()
             tc = TimeCode()
             tc.setTimeCode(self.tcPos.text())
             tc += 1
             self.tcPos.setText(tc.timecode)
             self.tcPos.repaint()
-            # assert self.tcDur.text() == tc.timecode
 
     def previousFrame(self):
-        if not self.mPlayer.is_playing() and self.mPlayer.is_seekable() == 1:
-            currPos = self.mPlayer.get_position()
-            self.mPlayer.set_position(currPos - 0.001)  # Frames in Milliseconds
-            newPos = self.mPlayer.get_time()/1000
-            newTC = TimeCode()
-            newTC.setSecs(newPos)
-            self.tcPos.setText(newTC.timecode)
+        if not self.isPlaying and self.isSeekable:
+            currPos = self.mPlayer.get_position()  # Not accurate
+            self.mPlayer.set_position(currPos - 0.001)
+            self.getPosition()
+            self.tcPos.setText(self.currPos.timecode)
             self.tcPos.repaint()
     
     def fastforward(self):
@@ -181,5 +219,22 @@ class vlcPlayer(QWidget):
         self.mPlayer.set_rate(curPlayRate * 2)
     
     def rewind(self):
-        curPlayRate = self.mPlayer.get_rate()
-        self.mPlayer.set_rate(curPlayRate / 2)
+        if self.isPlaying:
+            self.pauseVideo()
+        currPos = self.mPlayer.get_position()  # Not accurate
+        # print("Seeking to ", currPos-0.1)
+        self.mPlayer.set_position(currPos - 0.03)
+        pos_msecs = self.getPosition()
+        self.tcPos.setText(self.currPos.timecode)
+        self.tcPos.repaint()
+        self.video_slider.setSliderPosition(floor(pos_msecs))
+    
+    def vslider_moved(self, position):
+        self.mPlayer.set_position(position/1000)
+    
+    def vslider_released(self):
+        self.mPlayer.play()
+    
+    def vslider_posUpdate(self):
+        self.video_slider.setSliderPosition(self.mPlayer.get_position()*1000)
+        self.video_slider.repaint()
