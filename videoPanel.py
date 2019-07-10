@@ -11,6 +11,11 @@ from timecode import TimeCode
 from ctypes import ArgumentError
 import vlc, sys
 
+def resource_path(relative_path):
+     if hasattr(sys, '_MEIPASS'):
+         return path.join(sys._MEIPASS, relative_path)
+     return path.join(path.abspath("."), relative_path)
+
 
 class video_frame(QLabel):
     fileDroped = Signal(str)
@@ -71,13 +76,13 @@ class vlcPlayer(QWidget):
         # Previous Frame
         btn_pf = QPushButton()
         btn_pf.setFixedSize(QSize(32, 32))
-        ico_pf = QIcon(QPixmap("icons/previous.png"))
+        ico_pf = QIcon(QPixmap(resource_path("icons/previous.png")))
         btn_pf.setIcon(ico_pf)
         btn_pf.clicked.connect(self.previousFrame)
         # Rewind
         btn_rewind = QPushButton()
         btn_rewind.setFixedSize(QSize(32, 32))
-        ico_re = QIcon(QPixmap("icons/rewind.png"))
+        ico_re = QIcon(QPixmap(resource_path("icons/rewind.png")))
         btn_rewind.setIcon(ico_re)
         btn_rewind.clicked.connect(self.rewind)
         # btn_rewind.release.connect(self.playVideo)
@@ -87,25 +92,25 @@ class vlcPlayer(QWidget):
         # Play
         btn_play = QPushButton()
         btn_play.setFixedSize(QSize(32, 32))
-        ico_play = QIcon(QPixmap("icons/play-button.png"))
+        ico_play = QIcon(QPixmap(resource_path("icons/play-button.png"))) # "icons/play-button.png"
         btn_play.setIcon(ico_play)
         btn_play.clicked.connect(self.playVideo)
         # Pause
         btn_pause = QPushButton()
         btn_pause.setFixedSize(QSize(32, 32))
-        ico_pause = QIcon(QPixmap("icons/pause-button.png"))
+        ico_pause = QIcon(QPixmap(resource_path("icons/pause-button.png")))
         btn_pause.setIcon(ico_pause)
         btn_pause.clicked.connect(self.pauseVideo)
         # Fast Forward
         btn_ff = QPushButton()
         btn_ff.setFixedSize(QSize(32, 32))
-        ico_ff = QIcon(QPixmap("icons/fast-forward.png"))
+        ico_ff = QIcon(QPixmap(resource_path("icons/fast-forward.png")))
         btn_ff.setIcon(ico_ff)
         btn_ff.clicked.connect(self.fastforward)
         # Next Frame
         btn_nf = QPushButton()
         btn_nf.setFixedSize(QSize(32, 32))
-        ico_nf = QIcon(QPixmap("icons/next.png"))
+        ico_nf = QIcon(QPixmap(resource_path("icons/next.png")))
         btn_nf.setIcon(ico_nf)
         btn_nf.clicked.connect(self.nextFrame)
         # Video Lenght Slider
