@@ -13,6 +13,7 @@ class DictionaryCompleter(QCompleter):
 
 
 class CompletionTextEdit(QTextEdit):
+    insert_subtitle = Signal()
     def __init__(self, parent=None):
         super(CompletionTextEdit, self).__init__(parent)
         self.setMinimumWidth(400)
@@ -60,11 +61,19 @@ class CompletionTextEdit(QTextEdit):
             Qt.Key_Backtab):
                 event.ignore()
                 return
+        
+        if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_I:
+            # print("Control/Command+I pressed!")
+            self.insert_subtitle.emit()
+        # elif event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_O:
+        #     print("Control/Command+O pressed!")
+        # elif event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_P:
+        #     print("Control/Command+P pressed!")
 
         ## has ctrl-E been pressed??
-        isShortcut = (event.modifiers() == Qt.ControlModifier and
+        completion_shortcut = (event.modifiers() == Qt.ControlModifier and
                       event.key() == Qt.Key_E)
-        if (not self.completer or not isShortcut):
+        if (not self.completer or not completion_shortcut):
             QTextEdit.keyPressEvent(self, event)
 
         ## ctrl or shift key on it's own??
@@ -81,7 +90,7 @@ class CompletionTextEdit(QTextEdit):
 
         completionPrefix = self.textUnderCursor()
 
-        if (not isShortcut and (hasModifier or event.text() == "" or
+        if (not completion_shortcut and (hasModifier or event.text() == "" or
         len(completionPrefix) < 3 or
         event.text()[-1] in eow )):
             self.completer.popup().hide()
@@ -132,11 +141,11 @@ class subTitleEdit(QWidget):
         mainlayout.addLayout(subLayout)
         # Add Next Line Controls
         # txtSubTitle = QTextEdit()
-        txtSubTitle = CompletionTextEdit()
+        self.subtitle = CompletionTextEdit()
         completer = DictionaryCompleter()
-        txtSubTitle.setCompleter(completer)
-        txtSubTitle.setMaximumHeight(100)
-        mainlayout.addWidget(txtSubTitle)
+        self.subtitle.setCompleter(completer)
+        self.subtitle.setMaximumHeight(100)
+        mainlayout.addWidget(self.subtitle)
         # Setup TimeCode LineEdit Controls
         self.setup_linedt_tc(self.tcIn)
         self.setup_linedt_tc(self.tcOut)

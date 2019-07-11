@@ -2,9 +2,10 @@ import sys
 # from PySide2 import QtGui
 from PySide2.QtCore import Qt, Slot
 from PySide2.QtWidgets import (QWidget, QApplication, QMainWindow, QDockWidget, 
-QSizePolicy, QTableWidget, QMenu, QAction)
+QSizePolicy, QTableWidget, QMenu, QAction, QTableWidgetItem)
 from editPanel import subTitleEdit
 from videoPanel import vlcPlayer
+from dataPanel import subTitleList
 
 __version__ = "alpha Pre-Release"
 __major__ = 0
@@ -36,16 +37,12 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.RightDockWidgetArea, self.dock1)
         self.addDockWidget(Qt.RightDockWidgetArea, self.dock2)
         self.addDockWidget(Qt.RightDockWidgetArea, self.dock3)
-        # dock2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         # Custom widget editPanel.py |> subTitleEdit
         self.editPanel = subTitleEdit()
+        self.editPanel.subtitle.insert_subtitle.connect(self.insert_subtitle)
         self.dock2.setWidget(self.editPanel)
-        # SubTitle Table Controls
-        self.subTitleList = QTableWidget(0, 5)
-        self.subTitleList.setHorizontalHeaderLabels(['No', 'In TimeCode', 'Out TimeCode', 'Duration', 'Subtitle'])
-        self.subTitleList.setColumnWidth(0, 50)  # 4Digits 9999
-        self.subTitleList.horizontalHeader().setStretchLastSection(True)
-        # dock3.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # Custom widget dataPanel.py |> subTitleList
+        self.subTitleList = subTitleList()
         self.dock3.setWidget(self.subTitleList)
         self.actShowT = QAction("Show TitleBar", self)
         self.actShowT.triggered.connect(self.showTitleBar)
@@ -76,6 +73,15 @@ class MainWindow(QMainWindow):
         self.dock2.setTitleBarWidget(self.noTitle2)
         self.dock3.setTitleBarWidget(self.noTitle3)
         self.repaint()
+    
+    @Slot()
+    def insert_subtitle(self):
+        rollNum = self.editPanel.no.value()
+        # print("Inserting Subtitle", x)
+        self.subTitleList.setRowCount(rollNum)
+        for col in range(0, 5):
+            self.subTitleList.setItem(rollNum-1, col, QTableWidgetItem("XXX"))
+        self.editPanel.no.setValue(rollNum+1)
 
 
 if __name__ == '__main__':
