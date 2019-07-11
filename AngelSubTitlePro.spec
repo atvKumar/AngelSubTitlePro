@@ -4,13 +4,13 @@ block_cipher = None
 
 
 a = Analysis(['main.py'],
-             pathex=['/Users/promo3/Development/AngelSubTitlePro'],
+             pathex=['/'],
              binaries=[],
-             datas=[('/Users/promo3/Development/AngelSubTitlePro/icons/*.png', 'icons/')],
+             datas=[('icons/*.png', 'icons/')],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
-             excludes=[],
+             excludes=["PyQt5"],
              win_no_prefer_redirects=False,
              win_private_assemblies=False,
              cipher=block_cipher,
