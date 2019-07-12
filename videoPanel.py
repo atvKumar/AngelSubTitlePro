@@ -240,7 +240,7 @@ class vlcPlayer(QWidget):
             self.pauseVideo()
         currPos = self.mPlayer.get_position()  # Not accurate
         # print("Seeking to ", currPos-0.1)
-        self.mPlayer.set_position(currPos - 0.03)
+        self.mPlayer.set_position(currPos - 0.01)
         pos_msecs = self.getPosition()
         self.tcPos.setText(self.currPos.timecode)
         self.tcPos.repaint()

@@ -24,6 +24,12 @@ class MainWindow(QMainWindow):
         shortcut_export.activated.connect(self.export_project)
         shortcut_import = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_I), self)
         shortcut_import.activated.connect(self.import_project)
+        shortcut_setIn = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_BracketLeft), self)
+        shortcut_setIn.activated.connect(self.set_intime)
+        shortcut_setOut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_BracketRight), self)
+        shortcut_setOut.activated.connect(self.set_outtime)
+        shortcut_insert = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_Equal), self)
+        shortcut_insert.activated.connect(self.insert_new_subtitle)
     
     def initUI(self):
         self.setMinimumSize(50, 70)
@@ -47,7 +53,6 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.RightDockWidgetArea, self.dock3)
         # Custom widget editPanel.py |> subTitleEdit
         self.editPanel = subTitleEdit()
-        self.editPanel.subtitle.insert_subtitle.connect(self.insert_subtitle)
         self.dock2.setWidget(self.editPanel)
         # Custom widget dataPanel.py |> subTitleList
         self.subTitleList = subTitleList()
@@ -83,13 +88,24 @@ class MainWindow(QMainWindow):
         self.repaint()
     
     @Slot()
-    def insert_subtitle(self):
-        rollNum = self.editPanel.no.value()
-        # print("Inserting Subtitle", x)
-        self.subTitleList.setRowCount(rollNum)
-        for col in range(0, 5):
-            self.subTitleList.setItem(rollNum-1, col, QTableWidgetItem("XXX"))
-        self.editPanel.no.setValue(rollNum+1)
+    def insert_new_subtitle(self):
+        index = self.editPanel.no.value() - 1 # Starts at 1
+        numRows = self.subTitleList.rowCount()
+        # print(index, numRows)
+        if index >= numRows:
+            # print("Everything is ok, can Insert")
+            self.subTitleList.setRowCount(index+1)
+            # Insert Row Data
+            self.subTitleList.setItem(numRows, 0, QTableWidgetItem(str(index+1)))
+            self.subTitleList.setItem(numRows, 1, QTableWidgetItem(self.editPanel.tcIn.text()))
+            self.subTitleList.setItem(numRows, 2, QTableWidgetItem(self.editPanel.tcOut.text()))
+            self.subTitleList.setItem(numRows, 3, QTableWidgetItem(self.editPanel.tcDur.text()))
+            self.subTitleList.setItem(numRows, 4, QTableWidgetItem(self.editPanel.subtitle.toPlainText()))
+            self.editPanel.no.setValue(index+2) # Increment Number
+            self.editPanel.subtitle.clear()
+            self.editPanel.tcIn.setText(self.editPanel.tcOut.text())
+            self.editPanel.tcOut.setText("00000000")
+            self.editPanel.tcDur.setText("00000000")
     
     @Slot()
     def open_project(self):
@@ -106,6 +122,17 @@ class MainWindow(QMainWindow):
     @Slot()
     def import_project(self):
         print("Importing File!")
+    
+    @Slot()
+    def set_intime(self):
+        if not self.videoPanel.isPlaying and self.videoPanel.fileParsed:
+            self.editPanel.tcIn.setText(self.videoPanel.currPos.timecode)
+    
+    @Slot()
+    def set_outtime(self):
+        if not self.videoPanel.isPlaying and self.videoPanel.fileParsed:
+            self.editPanel.tcOut.setText(self.videoPanel.currPos.timecode)
+            self.editPanel.calculate_duration()
 
 
 if __name__ == '__main__':

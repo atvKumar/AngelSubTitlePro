@@ -1,5 +1,5 @@
 from PySide2.QtWidgets import (QWidget, QVBoxLayout, QPushButton, QHBoxLayout, 
-QLineEdit, QSpinBox, QTextEdit, QCompleter)
+QLineEdit, QSpinBox, QTextEdit, QCompleter, QLabel)
 from PySide2.QtCore import Signal, Slot, QRegExp, Qt, SIGNAL
 from PySide2.QtGui import QRegExpValidator, QTextCursor
 from timecode import TimeCode
@@ -13,7 +13,6 @@ class DictionaryCompleter(QCompleter):
 
 
 class CompletionTextEdit(QTextEdit):
-    insert_subtitle = Signal()
     def __init__(self, parent=None):
         super(CompletionTextEdit, self).__init__(parent)
         self.setMinimumWidth(400)
@@ -100,7 +99,7 @@ class subTitleEdit(QWidget):
         super(subTitleEdit, self).__init__()
         self.rx = QRegExp("(^(?:(:?[0-1][0-9]|[0-2][0-3]):)(?:[0-5][0-9]:){2}(?:[0-2][0-9])$)")
         self.initUI()
-    
+
     def initUI(self):
         # Master Layout
         mainlayout = QVBoxLayout()
@@ -110,8 +109,8 @@ class subTitleEdit(QWidget):
         # Top Layout (In Out Duration)
         subLayout = QHBoxLayout()
         subLayout.setContentsMargins(0, 0, 0, 0)
-        subLayout.setMargin(0)
-        subLayout.setSpacing(0)
+        subLayout.setMargin(5)
+        subLayout.setSpacing(5)
         # Top Layout Controls
         self.no = QSpinBox()
         self.no.setMinimum(1)
@@ -119,10 +118,18 @@ class subTitleEdit(QWidget):
         self.tcIn = QLineEdit()
         self.tcOut = QLineEdit()
         self.tcDur = QLineEdit()
+        index_lbl = QLabel("No:")
+        intc_lbl = QLabel("In:")
+        outtc_lbl = QLabel("Out:")
+        durtc_lbl = QLabel("Duration:")
         # Add to Layout
+        subLayout.addWidget(index_lbl)
         subLayout.addWidget(self.no)
+        subLayout.addWidget(intc_lbl)
         subLayout.addWidget(self.tcIn)
+        subLayout.addWidget(outtc_lbl)
         subLayout.addWidget(self.tcOut)
+        subLayout.addWidget(durtc_lbl)
         subLayout.addWidget(self.tcDur)
         # Add to Main
         mainlayout.addLayout(subLayout)
