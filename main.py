@@ -39,17 +39,17 @@ class MainWindow(QMainWindow):
         self.noTitle1 = QWidget()
         self.noTitle2 = QWidget()
         self.noTitle3 = QWidget()
-        self.dock1 = QDockWidget("Video Player", self)
+        # self.dock1 = QDockWidget("Video Player", self)
         self.dock2 = QDockWidget("Subtitle Editing", self)
         self.dock3 = QDockWidget("Subtitle List", self)
-        self.oldD1Title = self.dock1.titleBarWidget()
+        # self.oldD1Title = self.dock1.titleBarWidget()
         self.oldD2Title = self.dock2.titleBarWidget()
         self.oldD3Title = self.dock2.titleBarWidget()
-        self.dock1.setTitleBarWidget(self.noTitle1)
+        # self.dock1.setTitleBarWidget(self.noTitle1)
         self.dock2.setTitleBarWidget(self.noTitle2)
-        self.dock3.setTitleBarWidget(self.noTitle3) 
-        self.addDockWidget(Qt.RightDockWidgetArea, self.dock1)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.dock2)
+        self.dock3.setTitleBarWidget(self.noTitle3)
+        # self.addDockWidget(Qt.RightDockWidgetArea, self.dock1)
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.dock2)
         self.addDockWidget(Qt.RightDockWidgetArea, self.dock3)
         # Custom widget editPanel.py |> subTitleEdit
         self.editPanel = subTitleEdit()
@@ -64,7 +64,8 @@ class MainWindow(QMainWindow):
         # VLC Player
         self.videoPanel = vlcPlayer()
         self.videoPanel.message.connect(self.updateStatusBar)
-        self.dock1.setWidget(self.videoPanel)
+        # self.dock1.setWidget(self.videoPanel)
+        self.setCentralWidget(self.videoPanel)
     
     @Slot(str)
     def updateStatusBar(self, message):
@@ -77,12 +78,12 @@ class MainWindow(QMainWindow):
         menu.exec_(event.globalPos())
     
     def showTitleBar(self):
-        self.dock1.setTitleBarWidget(self.oldD1Title)
+        # self.dock1.setTitleBarWidget(self.oldD1Title)
         self.dock2.setTitleBarWidget(self.oldD2Title)
         self.dock3.setTitleBarWidget(self.oldD3Title)
     
     def hideTitleBar(self):
-        self.dock1.setTitleBarWidget(self.noTitle1)
+        # self.dock1.setTitleBarWidget(self.noTitle1)
         self.dock2.setTitleBarWidget(self.noTitle2)
         self.dock3.setTitleBarWidget(self.noTitle3)
         self.repaint()
@@ -96,11 +97,14 @@ class MainWindow(QMainWindow):
             # print("Everything is ok, can Insert")
             self.subTitleList.setRowCount(index+1)
             # Insert Row Data
-            self.subTitleList.setItem(numRows, 0, QTableWidgetItem(str(index+1)))
-            self.subTitleList.setItem(numRows, 1, QTableWidgetItem(self.editPanel.tcIn.text()))
-            self.subTitleList.setItem(numRows, 2, QTableWidgetItem(self.editPanel.tcOut.text()))
-            self.subTitleList.setItem(numRows, 3, QTableWidgetItem(self.editPanel.tcDur.text()))
-            self.subTitleList.setItem(numRows, 4, QTableWidgetItem(self.editPanel.subtitle.toPlainText()))
+            # self.subTitleList.setItem(numRows, 0, QTableWidgetItem(str(index+1)))
+            # self.subTitleList.setItem(numRows, 1, QTableWidgetItem(self.editPanel.tcIn.text()))
+            # self.subTitleList.setItem(numRows, 2, QTableWidgetItem(self.editPanel.tcOut.text()))
+            # self.subTitleList.setItem(numRows, 3, QTableWidgetItem(self.editPanel.tcDur.text()))
+            # self.subTitleList.setItem(numRows, 4, QTableWidgetItem(self.editPanel.subtitle.toPlainText()))
+            self.subTitleList.setItem(numRows, 0, QTableWidgetItem(self.editPanel.tcIn.text()))
+            self.subTitleList.setItem(numRows, 1, QTableWidgetItem(self.editPanel.tcOut.text()))
+            self.subTitleList.setItem(numRows, 2, QTableWidgetItem(self.editPanel.subtitle.toPlainText()))
             self.editPanel.no.setValue(index+2) # Increment Number
             self.editPanel.subtitle.clear()
             self.editPanel.tcIn.setText(self.editPanel.tcOut.text())
