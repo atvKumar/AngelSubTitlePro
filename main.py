@@ -1,8 +1,8 @@
 import sys
-# from PySide2 import QtGui
+from PySide2.QtGui import QKeySequence
 from PySide2.QtCore import Qt, Slot
 from PySide2.QtWidgets import (QWidget, QApplication, QMainWindow, QDockWidget, 
-QSizePolicy, QTableWidget, QMenu, QAction, QTableWidgetItem)
+QSizePolicy, QTableWidget, QMenu, QAction, QTableWidgetItem, QShortcut)
 from editPanel import subTitleEdit
 from videoPanel import vlcPlayer
 from dataPanel import subTitleList
@@ -16,6 +16,14 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         self.initUI()
+        shortcut_open = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_O), self)
+        shortcut_open.activated.connect(self.open_project)
+        shortcut_save = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_S), self)
+        shortcut_save.activated.connect(self.save_project)
+        shortcut_export = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_E), self)
+        shortcut_export.activated.connect(self.export_project)
+        shortcut_import = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_I), self)
+        shortcut_import.activated.connect(self.import_project)
     
     def initUI(self):
         self.setMinimumSize(50, 70)
@@ -82,6 +90,22 @@ class MainWindow(QMainWindow):
         for col in range(0, 5):
             self.subTitleList.setItem(rollNum-1, col, QTableWidgetItem("XXX"))
         self.editPanel.no.setValue(rollNum+1)
+    
+    @Slot()
+    def open_project(self):
+        print("Opening project!")
+    
+    @Slot()
+    def save_project(self):
+        print("Saving project!")
+    
+    @Slot()
+    def export_project(self):
+        print("Exporting current project!")
+    
+    @Slot()
+    def import_project(self):
+        print("Importing File!")
 
 
 if __name__ == '__main__':

@@ -3,9 +3,9 @@ from urllib.parse import urlparse
 from math import floor
 from time import sleep
 from PySide2.QtWidgets import (QWidget, QLabel, QVBoxLayout, QPushButton, 
-QHBoxLayout, QSlider)
+QHBoxLayout, QSlider, QShortcut, QFileDialog)
 from PySide2.QtCore import Signal, Slot, QSize, Qt, QTimer
-from PySide2.QtGui import QPixmap, QIcon
+from PySide2.QtGui import QPixmap, QIcon, QKeySequence
 from vlc import EventType
 from timecode import TimeCode
 from ctypes import ArgumentError
@@ -54,6 +54,18 @@ class vlcPlayer(QWidget):
         self.event_manager.event_attach(EventType.MediaPlayerEndReached, self.vlc_event_handle_MediaEnded)
         self.timer = QTimer(self)
         self.initUI()
+        shortcut_rewind = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_J), self)
+        shortcut_rewind.activated.connect(self.rewind)
+        shortcut_play_pause = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_K), self)
+        shortcut_play_pause.activated.connect(self.play_pause)
+        shortcut_forward = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_L), self)
+        shortcut_forward.activated.connect(self.fastforward)
+        shortcut_nf = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_Slash), self)
+        shortcut_nf.activated.connect(self.nextFrame)
+        shortcut_pf = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_Comma), self)
+        shortcut_pf.activated.connect(self.previousFrame)
+        shortcut_loadV = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_P), self)
+        shortcut_loadV.activated.connect(self.load_video)
     
     def initUI(self):
         # Main Layout
@@ -243,3 +255,25 @@ class vlcPlayer(QWidget):
     def vslider_posUpdate(self):
         self.video_slider.setSliderPosition(self.mPlayer.get_position()*1000)
         self.video_slider.repaint()
+
+    @Slot()
+    def play_pause(self):
+        if self.fileParsed:
+            if not self.isPlaying:
+                self.mPlayer.play()
+                self.timer.start()
+                if self.isSeekable == False: # Check once
+                    if self.mPlayer.is_seekable() == 1:
+                        self.isSeekable = True
+            else:
+                self.mPlayer.pause()
+                self.timer.stop()
+            sleep(1)
+            self.mPlayer.set_rate(1.0)
+    
+    @Slot()
+    def load_video(self):
+        file_dialog = QFileDialog(self, "Open Video File")
+        selected_file = file_dialog.getOpenFileName()
+        if selected_file:
+            self.loadVideoFile(selected_file[0])

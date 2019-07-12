@@ -17,7 +17,6 @@ class CompletionTextEdit(QTextEdit):
     def __init__(self, parent=None):
         super(CompletionTextEdit, self).__init__(parent)
         self.setMinimumWidth(400)
-        # self.setPlainText(STARTTEXT)
         self.completer = None
         self.moveCursor(QTextCursor.End)
 
@@ -48,7 +47,7 @@ class CompletionTextEdit(QTextEdit):
 
     def focusInEvent(self, event):
         if self.completer:
-            self.completer.setWidget(self);
+            self.completer.setWidget(self)
         QTextEdit.focusInEvent(self, event)
 
     def keyPressEvent(self, event):
@@ -61,27 +60,15 @@ class CompletionTextEdit(QTextEdit):
             Qt.Key_Backtab):
                 event.ignore()
                 return
-        
-        if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_I:
-            # print("Control/Command+I pressed!")
-            self.insert_subtitle.emit()
-        # elif event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_O:
-        #     print("Control/Command+O pressed!")
-        # elif event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_P:
-        #     print("Control/Command+P pressed!")
 
-        ## has ctrl-E been pressed??
+        ## has ctrl-C been pressed??
         completion_shortcut = (event.modifiers() == Qt.ControlModifier and
-                      event.key() == Qt.Key_E)
+                      event.key() == Qt.Key_C)
         if (not self.completer or not completion_shortcut):
             QTextEdit.keyPressEvent(self, event)
 
         ## ctrl or shift key on it's own??
         ctrlOrShift = event.modifiers() in (Qt.ControlModifier, Qt.ShiftModifier)
-        # if ctrlOrShift and event == "":
-        #     # ctrl or shift key on it's own
-        #     print("Pressed CTRL OR SHIFT")
-        #     return
 
         eow = "~!@#$%^&*()_+{}|:\"<>?,./;'[]\\-=" #end of word
 
