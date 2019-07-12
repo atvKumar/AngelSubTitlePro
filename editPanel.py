@@ -3,12 +3,12 @@ QLineEdit, QSpinBox, QTextEdit, QCompleter)
 from PySide2.QtCore import Signal, Slot, QRegExp, Qt, SIGNAL
 from PySide2.QtGui import QRegExpValidator, QTextCursor
 from timecode import TimeCode
-from en_dictionary_filtered import get_filtered_words
+from language_utils import en_autocomplete_words
 
 
 class DictionaryCompleter(QCompleter):
     def __init__(self, parent=None):
-        words = get_filtered_words()
+        words = en_autocomplete_words()
         QCompleter.__init__(self, words, parent)
 
 
