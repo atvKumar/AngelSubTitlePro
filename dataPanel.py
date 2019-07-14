@@ -1,4 +1,5 @@
 from PySide2.QtWidgets import QTableWidget
+from PySide2.QtCore import Slot
 
 class subTitleList(QTableWidget):
     def __init__(self, parent=None):
@@ -8,3 +9,8 @@ class subTitleList(QTableWidget):
         self.horizontalHeader().setStretchLastSection(True)
         self.setShowGrid(True)
         self.setMinimumWidth(500)
+        # self.verticalHeader().sectionDoubleClicked.connect(self.dblClicked)
+
+    # @Slot()
+    # def dblClicked(self, event):
+    #     print("Double Clicked!", event)

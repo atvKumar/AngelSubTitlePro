@@ -3,9 +3,9 @@ from urllib.parse import urlparse
 from math import floor
 from time import sleep
 from PySide2.QtWidgets import (QWidget, QLabel, QVBoxLayout, QPushButton, 
-QHBoxLayout, QSlider, QShortcut, QFileDialog)
+QHBoxLayout, QSlider, QFileDialog)
 from PySide2.QtCore import Signal, Slot, QSize, Qt, QTimer
-from PySide2.QtGui import QPixmap, QIcon, QKeySequence
+from PySide2.QtGui import QPixmap, QIcon
 from vlc import EventType
 from timecode import TimeCode
 from ctypes import ArgumentError
@@ -54,18 +54,6 @@ class vlcPlayer(QWidget):
         self.event_manager.event_attach(EventType.MediaPlayerEndReached, self.vlc_event_handle_MediaEnded)
         self.timer = QTimer(self)
         self.initUI()
-        shortcut_rewind = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_J), self)
-        shortcut_rewind.activated.connect(self.rewind)
-        shortcut_play_pause = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_K), self)
-        shortcut_play_pause.activated.connect(self.play_pause)
-        shortcut_forward = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_L), self)
-        shortcut_forward.activated.connect(self.fastforward)
-        shortcut_nf = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_Slash), self)
-        shortcut_nf.activated.connect(self.nextFrame)
-        shortcut_pf = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_Comma), self)
-        shortcut_pf.activated.connect(self.previousFrame)
-        shortcut_loadV = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_P), self)
-        shortcut_loadV.activated.connect(self.load_video)
     
     def initUI(self):
         # Main Layout
@@ -207,13 +195,15 @@ class vlcPlayer(QWidget):
             sleep(1)
         else:
             self.mPlayer.set_rate(1.0)
-    
+
+    @Slot()
     def pauseVideo(self):
         if self.isPlaying and self.mPlayer.can_pause():
             self.mPlayer.pause()
             self.timer.stop()
             self.mPlayer.set_rate(1.0)
-    
+
+    @Slot()
     def nextFrame(self):
         if not self.isPlaying and self.isSeekable:
             self.mPlayer.next_frame()
@@ -223,6 +213,7 @@ class vlcPlayer(QWidget):
             self.tcPos.setText(tc.timecode)
             self.tcPos.repaint()
 
+    @Slot()
     def previousFrame(self):
         if not self.isPlaying and self.isSeekable:
             currPos = self.mPlayer.get_position()  # Not accurate
@@ -230,11 +221,12 @@ class vlcPlayer(QWidget):
             self.getPosition()
             self.tcPos.setText(self.currPos.timecode)
             self.tcPos.repaint()
-    
+    @Slot()
     def fastforward(self):
         curPlayRate = self.mPlayer.get_rate()
         self.mPlayer.set_rate(curPlayRate * 2)
-    
+
+    @Slot()
     def rewind(self):
         if self.isPlaying:
             self.pauseVideo()

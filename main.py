@@ -16,20 +16,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         self.initUI()
-        shortcut_open = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_O), self)
-        shortcut_open.activated.connect(self.open_project)
-        shortcut_save = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_S), self)
-        shortcut_save.activated.connect(self.save_project)
-        shortcut_export = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_E), self)
-        shortcut_export.activated.connect(self.export_project)
-        shortcut_import = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_I), self)
-        shortcut_import.activated.connect(self.import_project)
-        shortcut_setIn = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_BracketLeft), self)
-        shortcut_setIn.activated.connect(self.set_intime)
-        shortcut_setOut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_BracketRight), self)
-        shortcut_setOut.activated.connect(self.set_outtime)
-        shortcut_insert = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_Equal), self)
-        shortcut_insert.activated.connect(self.insert_new_subtitle)
+        self.setup_shortcuts()
     
     def initUI(self):
         self.setMinimumSize(50, 70)
@@ -48,9 +35,11 @@ class MainWindow(QMainWindow):
         # self.dock1.setTitleBarWidget(self.noTitle1)
         self.dock2.setTitleBarWidget(self.noTitle2)
         self.dock3.setTitleBarWidget(self.noTitle3)
+        self.dock2.setAllowedAreas(Qt.AllDockWidgetAreas)
+        self.dock3.setAllowedAreas(Qt.AllDockWidgetAreas)
         # self.addDockWidget(Qt.RightDockWidgetArea, self.dock1)
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.dock2)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.dock3)
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.dock3)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.dock2)
         # Custom widget editPanel.py |> subTitleEdit
         self.editPanel = subTitleEdit()
         self.dock2.setWidget(self.editPanel)
@@ -66,6 +55,39 @@ class MainWindow(QMainWindow):
         self.videoPanel.message.connect(self.updateStatusBar)
         # self.dock1.setWidget(self.videoPanel)
         self.setCentralWidget(self.videoPanel)
+        self.editPanel.subtitle.setFocus()
+        self.subTitleList.verticalHeader().sectionDoubleClicked.connect(self.edit_row)
+        self.re_editing = False
+    
+    def setup_shortcuts(self):
+        shortcut_open = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_O), self)
+        shortcut_open.activated.connect(self.open_project)
+        shortcut_save = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_S), self)
+        shortcut_save.activated.connect(self.save_project)
+        shortcut_export = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_E), self)
+        shortcut_export.activated.connect(self.export_project)
+        shortcut_import = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_I), self)
+        shortcut_import.activated.connect(self.import_project)
+        # Subtitle Editing Shortcuts
+        shortcut_setIn = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_BracketLeft), self)
+        shortcut_setIn.activated.connect(self.set_intime)
+        shortcut_setOut = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_BracketRight), self)
+        shortcut_setOut.activated.connect(self.set_outtime)
+        shortcut_insert = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_Equal), self)
+        shortcut_insert.activated.connect(self.insert_new_subtitle)
+        # Video Player ShortCuts
+        shortcut_rewind = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_J), self)
+        shortcut_rewind.activated.connect(self.videoPanel.rewind)
+        shortcut_play_pause = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_K), self)
+        shortcut_play_pause.activated.connect(self.videoPanel.play_pause)
+        shortcut_forward = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_L), self)
+        shortcut_forward.activated.connect(self.videoPanel.fastforward)
+        shortcut_nf = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_Slash), self)
+        shortcut_nf.activated.connect(self.videoPanel.nextFrame)
+        shortcut_pf = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_Comma), self)
+        shortcut_pf.activated.connect(self.videoPanel.previousFrame)
+        shortcut_loadV = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_P), self)
+        shortcut_loadV.activated.connect(self.videoPanel.load_video)
     
     @Slot(str)
     def updateStatusBar(self, message):
@@ -92,24 +114,31 @@ class MainWindow(QMainWindow):
     def insert_new_subtitle(self):
         index = self.editPanel.no.value() - 1 # Starts at 1
         numRows = self.subTitleList.rowCount()
-        # print(index, numRows)
-        if index >= numRows:
-            # print("Everything is ok, can Insert")
-            self.subTitleList.setRowCount(index+1)
-            # Insert Row Data
-            # self.subTitleList.setItem(numRows, 0, QTableWidgetItem(str(index+1)))
-            # self.subTitleList.setItem(numRows, 1, QTableWidgetItem(self.editPanel.tcIn.text()))
-            # self.subTitleList.setItem(numRows, 2, QTableWidgetItem(self.editPanel.tcOut.text()))
-            # self.subTitleList.setItem(numRows, 3, QTableWidgetItem(self.editPanel.tcDur.text()))
-            # self.subTitleList.setItem(numRows, 4, QTableWidgetItem(self.editPanel.subtitle.toPlainText()))
-            self.subTitleList.setItem(numRows, 0, QTableWidgetItem(self.editPanel.tcIn.text()))
-            self.subTitleList.setItem(numRows, 1, QTableWidgetItem(self.editPanel.tcOut.text()))
-            self.subTitleList.setItem(numRows, 2, QTableWidgetItem(self.editPanel.subtitle.toPlainText()))
-            self.editPanel.no.setValue(index+2) # Increment Number
+        tcIn = QTableWidgetItem(self.editPanel.tcIn.text())
+        tcOut = QTableWidgetItem(self.editPanel.tcOut.text())
+        sub = QTableWidgetItem(self.editPanel.subtitle.toPlainText())
+        if not self.re_editing:
+            # print(index, numRows)
+            if index >= numRows:
+                # print("Everything is ok, can Insert")
+                self.subTitleList.setRowCount(index+1)
+                # Insert Row Data
+                self.subTitleList.setItem(numRows, 0, tcIn)
+                self.subTitleList.setItem(numRows, 1, tcOut)
+                self.subTitleList.setItem(numRows, 2, sub)
+                self.editPanel.no.setValue(index+2) # Increment Number
+                self.editPanel.tcIn.setText(tcOut.text())
+        else:
+            self.subTitleList.setItem(index, 0, tcIn)
+            self.subTitleList.setItem(index, 1, tcOut)
+            self.subTitleList.setItem(index, 2, sub)
             self.editPanel.subtitle.clear()
-            self.editPanel.tcIn.setText(self.editPanel.tcOut.text())
-            self.editPanel.tcOut.setText("00000000")
-            self.editPanel.tcDur.setText("00000000")
+            self.editPanel.no.setValue(numRows+1)
+            self.editPanel.tcIn.setText(self.subTitleList.item(numRows-1, 1).text())
+            self.re_editing = False
+        self.editPanel.subtitle.clear()
+        self.editPanel.tcOut.setText("00000000")
+        self.editPanel.tcDur.setText("00000000")
     
     @Slot()
     def open_project(self):
@@ -137,7 +166,16 @@ class MainWindow(QMainWindow):
         if not self.videoPanel.isPlaying and self.videoPanel.fileParsed:
             self.editPanel.tcOut.setText(self.videoPanel.currPos.timecode)
             self.editPanel.calculate_duration()
-
+    
+    @Slot()
+    def edit_row(self, row_number):
+        self.editPanel.no.setValue(row_number+1)
+        self.editPanel.tcIn.setText(self.subTitleList.item(row_number, 0).text())
+        self.editPanel.tcOut.setText(self.subTitleList.item(row_number, 1).text())
+        self.editPanel.calculate_duration()
+        self.editPanel.subtitle.clear()
+        self.editPanel.subtitle.setText(self.subTitleList.item(row_number, 2).text())
+        self.re_editing = True
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

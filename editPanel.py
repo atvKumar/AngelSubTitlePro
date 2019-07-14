@@ -1,9 +1,10 @@
 from PySide2.QtWidgets import (QWidget, QVBoxLayout, QPushButton, QHBoxLayout, 
-QLineEdit, QSpinBox, QTextEdit, QCompleter, QLabel)
+QLineEdit, QSpinBox, QTextEdit, QCompleter, QLabel, QFontComboBox, QComboBox, QSpacerItem)
 from PySide2.QtCore import Signal, Slot, QRegExp, Qt, SIGNAL
-from PySide2.QtGui import QRegExpValidator, QTextCursor
+from PySide2.QtGui import QRegExpValidator, QTextCursor, QFont
 from timecode import TimeCode
 from language_utils import en_autocomplete_words
+from time import sleep
 
 
 class DictionaryCompleter(QCompleter):
@@ -104,8 +105,9 @@ class subTitleEdit(QWidget):
         # Master Layout
         mainlayout = QVBoxLayout()
         mainlayout.setContentsMargins(0, 0, 0, 0)
-        mainlayout.setMargin(0)
-        mainlayout.setSpacing(0)
+        mainlayout.setMargin(5)
+        mainlayout.setSpacing(5)
+        mainlayout.setStretch(0, 0)
         # Top Layout (In Out Duration)
         subLayout = QHBoxLayout()
         subLayout.setContentsMargins(0, 0, 0, 0)
@@ -134,11 +136,27 @@ class subTitleEdit(QWidget):
         # Add to Main
         mainlayout.addLayout(subLayout)
         # Add Next Line Controls
+        second_line_layout = QHBoxLayout()
+        font = QFont("Helvetica", 13)
+        self.font_family = QFontComboBox()
+        self.font_family.setMaximumWidth(180)
+        self.font_family.setCurrentFont(font)
+        second_line_layout.addWidget(self.font_family)
+        self.font_family.currentTextChanged.connect(self.set_font)
+        self.font_size = QComboBox()
+        self.font_size.addItems(["9", "10", "11", "12", "13", "14", "18", "24", "36", "48", "64"])
+        self.font_size.setCurrentText("13")
+        self.font_size.setMaximumWidth(80)
+        self.font_size.currentIndexChanged.connect(self.set_font)
+        second_line_layout.addWidget(self.font_size)
+        second_line_layout.addStretch(1)
+        mainlayout.addLayout(second_line_layout)
         # txtSubTitle = QTextEdit()
         self.subtitle = CompletionTextEdit()
+        # print(self.subtitle.font())
         completer = DictionaryCompleter()
         self.subtitle.setCompleter(completer)
-        self.subtitle.setMaximumHeight(100)
+        # self.subtitle.setMaximumHeight(100)
         mainlayout.addWidget(self.subtitle)
         # Setup TimeCode LineEdit Controls
         self.setup_linedt_tc(self.tcIn)
@@ -164,3 +182,7 @@ class subTitleEdit(QWidget):
             self.tcDur.setText(Dur.timecode)
         else:
             print("Error, Out should be larger than In!")
+
+    @Slot()
+    def set_font(self):
+        self.subtitle.setCurrentFont(QFont(self.font_family.currentText(), int(self.font_size.currentText())))
