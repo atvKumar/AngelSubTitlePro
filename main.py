@@ -2,7 +2,7 @@ import sys
 from PySide2.QtGui import QKeySequence
 from PySide2.QtCore import Qt, Slot
 from PySide2.QtWidgets import (QWidget, QApplication, QMainWindow, QDockWidget, 
-QSizePolicy, QTableWidget, QMenu, QAction, QTableWidgetItem, QShortcut)
+QSizePolicy, QTableWidget, QMenu, QAction, QTableWidgetItem, QShortcut, QFileDialog)
 from editPanel import subTitleEdit
 from videoPanel import vlcPlayer
 from dataPanel import subTitleList
@@ -88,6 +88,8 @@ class MainWindow(QMainWindow):
         shortcut_pf.activated.connect(self.videoPanel.previousFrame)
         shortcut_loadV = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_P), self)
         shortcut_loadV.activated.connect(self.videoPanel.load_video)
+        shortcut_safezone = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_T), self)
+        shortcut_safezone.activated.connect(self.videoPanel.set_overlay_safezone)
     
     @Slot(str)
     def updateStatusBar(self, message):
@@ -143,6 +145,7 @@ class MainWindow(QMainWindow):
     @Slot()
     def open_project(self):
         print("Opening project!")
+        # self.videoPanel.set_overlay_image()
     
     @Slot()
     def save_project(self):
@@ -151,7 +154,21 @@ class MainWindow(QMainWindow):
     @Slot()
     def export_project(self):
         print("Exporting current project!")
-    
+        file_dialog = QFileDialog(self, "Save as")
+        selected_file = file_dialog.getSaveFileName()
+        if selected_file:
+            # print(selected_file[0])
+            with open(selected_file[0], 'w', encoding='utf-8') as fp:
+                fp.write("<begin subtitles>\n\n")
+                for i in range(self.subTitleList.rowCount()):
+                    tcIn = self.subTitleList.item(i, 0).text()
+                    tcOut = self.subTitleList.item(i, 1).text()
+                    sub = self.subTitleList.item(i, 2).text()
+                    fp.write(f"{tcIn} {tcOut}\n")
+                    fp.write(f"{sub}\n")
+                    fp.write("\n")
+                fp.write("<end subtitles>")
+
     @Slot()
     def import_project(self):
         print("Importing File!")

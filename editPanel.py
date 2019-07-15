@@ -52,12 +52,7 @@ class CompletionTextEdit(QTextEdit):
 
     def keyPressEvent(self, event):
         if self.completer and self.completer.popup().isVisible():
-            if event.key() in (
-            Qt.Key_Enter,
-            Qt.Key_Return,
-            Qt.Key_Escape,
-            Qt.Key_Tab,
-            Qt.Key_Backtab):
+            if event.key() in (Qt.Key_Enter, Qt.Key_Return, Qt.Key_Escape, Qt.Key_Tab, Qt.Key_Backtab):
                 event.ignore()
                 return
 
@@ -72,22 +67,19 @@ class CompletionTextEdit(QTextEdit):
 
         eow = "~!@#$%^&*()_+{}|:\"<>?,./;'[]\\-=" #end of word
 
-        hasModifier = ((event.modifiers() != Qt.NoModifier) and
-                        not ctrlOrShift)
+        hasModifier = ((event.modifiers() != Qt.NoModifier) and not ctrlOrShift)
 
         completionPrefix = self.textUnderCursor()
 
         if (not completion_shortcut and (hasModifier or event.text() == "" or
-        len(completionPrefix) < 3 or
-        event.text()[-1] in eow )):
+        len(completionPrefix) < 3 or event.text()[-1] in eow )):
             self.completer.popup().hide()
             return
 
         if (completionPrefix != self.completer.completionPrefix()):
             self.completer.setCompletionPrefix(completionPrefix)
             popup = self.completer.popup()
-            popup.setCurrentIndex(
-                self.completer.completionModel().index(0,0))
+            popup.setCurrentIndex(self.completer.completionModel().index(0,0))
 
         cr = self.cursorRect()
         cr.setWidth(self.completer.popup().sizeHintForColumn(0)
@@ -180,8 +172,6 @@ class subTitleEdit(QWidget):
         if tcOut.frames > tcIn.frames:
             Dur = tcOut - tcIn
             self.tcDur.setText(Dur.timecode)
-        else:
-            print("Error, Out should be larger than In!")
 
     @Slot()
     def set_font(self):

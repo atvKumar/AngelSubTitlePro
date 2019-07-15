@@ -6,9 +6,8 @@ from PySide2.QtWidgets import (QWidget, QLabel, QVBoxLayout, QPushButton,
 QHBoxLayout, QSlider, QFileDialog)
 from PySide2.QtCore import Signal, Slot, QSize, Qt, QTimer
 from PySide2.QtGui import QPixmap, QIcon
-from vlc import EventType
+from vlc import EventType, VideoMarqueeOption, VideoLogoOption, Position, str_to_bytes
 from timecode import TimeCode
-from ctypes import ArgumentError
 import vlc, sys
 
 def resource_path(relative_path):
@@ -24,7 +23,7 @@ class video_frame(QLabel):
         self.setStyleSheet("QLabel {background: 'black';}")
         self.setMinimumSize(480, 360)
         self.setAcceptDrops(True)
-    
+
     def dragEnterEvent(self, e):
         file_url = e.mimeData().text()
         p = urlparse(file_url)
@@ -53,6 +52,7 @@ class vlcPlayer(QWidget):
         self.event_manager.event_attach(EventType.MediaPlayerPaused, self.vlc_event_handle_MediaPaused)
         self.event_manager.event_attach(EventType.MediaPlayerEndReached, self.vlc_event_handle_MediaEnded)
         self.timer = QTimer(self)
+        self.safezone = False
         self.initUI()
     
     def initUI(self):
@@ -269,3 +269,19 @@ class vlcPlayer(QWidget):
         selected_file = file_dialog.getOpenFileName()
         if selected_file:
             self.loadVideoFile(selected_file[0])
+    
+    def set_overlay_text(self, text):  # Timeout and Refresh options available
+        self.mPlayer.video_set_marquee_int(VideoMarqueeOption.Enable, 1)
+        self.mPlayer.video_set_marquee_int(VideoMarqueeOption.Size, 20)
+        self.mPlayer.video_set_marquee_int(VideoMarqueeOption.Position, Position.Bottom+Position.Center)
+        self.mPlayer.video_set_marquee_string(VideoMarqueeOption.Text, str_to_bytes(text))
+
+    @Slot()
+    def set_overlay_safezone(self):
+        if not self.safezone:
+            self.mPlayer.video_set_logo_int(VideoLogoOption.logo_enable, 1)
+            self.mPlayer.video_set_logo_string(VideoLogoOption.logo_file, str_to_bytes(resource_path("icons/camera_safe_areas_646x360.png")))
+            self.safezone = True
+        else:
+            self.mPlayer.video_set_logo_int(VideoLogoOption.logo_enable, 0)
+            self.safezone = False
