@@ -6,6 +6,8 @@ QSizePolicy, QTableWidget, QMenu, QAction, QTableWidgetItem, QShortcut, QFileDia
 from editPanel import subTitleEdit
 from videoPanel import vlcPlayer
 from dataPanel import subTitleList
+from timecode import TimeCode
+from os.path import splitext
 
 __version__ = "alpha Pre-Release"
 __major__ = 0
@@ -152,22 +154,33 @@ class MainWindow(QMainWindow):
         print("Saving project!")
     
     @Slot()
-    def export_project(self):
+    def export_project(self):  # Testing SubRip (SRT)
         print("Exporting current project!")
         file_dialog = QFileDialog(self, "Save as")
-        selected_file = file_dialog.getSaveFileName()
-        if selected_file:
-            # print(selected_file[0])
-            with open(selected_file[0], 'w', encoding='utf-8') as fp:
-                fp.write("<begin subtitles>\n\n")
-                for i in range(self.subTitleList.rowCount()):
-                    tcIn = self.subTitleList.item(i, 0).text()
-                    tcOut = self.subTitleList.item(i, 1).text()
-                    sub = self.subTitleList.item(i, 2).text()
-                    fp.write(f"{tcIn} {tcOut}\n")
-                    fp.write(f"{sub}\n")
-                    fp.write("\n")
-                fp.write("<end subtitles>")
+        selected_file, valid = file_dialog.getSaveFileName()
+        if valid:
+            fileName, ext = splitext(selected_file)
+            if ext == ".txt":
+                with open(selected_file, 'w', encoding='utf-8') as fp:
+                    fp.write("<begin subtitles>\n\n")
+                    for i in range(self.subTitleList.rowCount()):
+                        tcIn = self.subTitleList.item(i, 0).text()
+                        tcOut = self.subTitleList.item(i, 1).text()
+                        sub = self.subTitleList.item(i, 2).text()
+                        fp.write(f"{tcIn} {tcOut}\n")
+                        fp.write(f"{sub}\n")
+                        fp.write("\n")
+                    fp.write("<end subtitles>")
+            elif ext == ".srt":
+                with open(selected_file, 'w', encoding='utf-8') as fp:
+                    for i in range(self.subTitleList.rowCount()):
+                        fp.write(f"{i+1}\n")
+                        tcIn = TimeCode(self.subTitleList.item(i, 0).text())
+                        tcOut = TimeCode(self.subTitleList.item(i, 1).text())
+                        sub = self.subTitleList.item(i, 2).text()
+                        fp.write(f"{tcIn.get_mstc()} --> {tcOut.get_mstc()}\n")
+                        fp.write(f"{sub}\n")
+                        fp.write("\n")
 
     @Slot()
     def import_project(self):

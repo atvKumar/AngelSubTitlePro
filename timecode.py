@@ -88,9 +88,15 @@ class TimeCode(object):
         hours = floor(total_seconds / (60*60))
         frames = self.msToFrames(str(secs).split(".")[1])
         self.timecode = f"{hours:02}:{minutes:02}:{seconds:02}:{frames:02}"
+    
+    def get_mstc(self):
+        return f"{self.hrs:02}:{self.mins:02}:{self.secs:02};{self.framesToMs(self.frms):03}"
 
     def msToFrames(self, ms):
         return int(round(float(self.framerate) / 1000 * float(ms)))
+    
+    def framesToMs(self, frames):
+        return int(round(float(frames) *  1000 / float(25)))
 
     def __str__(self):
         return self.timecode
