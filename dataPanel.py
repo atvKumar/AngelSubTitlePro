@@ -1,7 +1,7 @@
 from PySide2.QtWidgets import QTableWidget
 from PySide2.QtCore import Slot
 
-class subTitleList(QTableWidget):
+class subTitleTable(QTableWidget):
     def __init__(self, parent=None):
         QTableWidget.__init__(self, 0, 3)
         self.setHorizontalHeaderLabels(['In TimeCode', 'Out TimeCode', 'Subtitle'])

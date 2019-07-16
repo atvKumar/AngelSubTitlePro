@@ -2,10 +2,10 @@ import sys
 from PySide2.QtGui import QKeySequence
 from PySide2.QtCore import Qt, Slot
 from PySide2.QtWidgets import (QWidget, QApplication, QMainWindow, QDockWidget, 
-QSizePolicy, QTableWidget, QMenu, QAction, QTableWidgetItem, QShortcut, QFileDialog)
+QSizePolicy, QLabel, QMenu, QAction, QTableWidgetItem, QShortcut, QFileDialog)
 from editPanel import subTitleEdit
 from videoPanel import vlcPlayer
-from dataPanel import subTitleList
+from dataPanel import subTitleTable
 from timecode import TimeCode
 from os.path import splitext
 
@@ -17,6 +17,7 @@ __minor__ = 1
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
+        self.re_editing = False
         self.initUI()
         self.setup_shortcuts()
     
@@ -25,41 +26,54 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(f"Angel SubTitle Pro ({__version__})")
         self.sb = self.statusBar() 
         self.updateStatusBar(f"{__version__}.{__major__}.{__minor__}")
-        self.noTitle1 = QWidget()
+        # Dockable Widgets -----------------------------------------------------------
+        # self.dock1 = QDockWidget("Video Player", self) # Coverted to Central Widget
+        self.dock2 = QDockWidget("Text Editing View", self)
+        self.dock3 = QDockWidget("Table View", self)
+        self.dock4 = QDockWidget("Waveform View", self)
+        # Title Widgets    -----------------------------------------------------------
+        # self.oldD1Title = self.dock1.titleBarWidget()  # Dock1
+        self.oldD2Title = self.dock2.titleBarWidget()
+        self.oldD3Title = self.dock3.titleBarWidget()
+        self.oldD4Title = self.dock4.titleBarWidget()
+        # self.noTitle1 = QWidget()  # Dock1
         self.noTitle2 = QWidget()
         self.noTitle3 = QWidget()
-        # self.dock1 = QDockWidget("Video Player", self)
-        self.dock2 = QDockWidget("Subtitle Editing", self)
-        self.dock3 = QDockWidget("Subtitle List", self)
-        # self.oldD1Title = self.dock1.titleBarWidget()
-        self.oldD2Title = self.dock2.titleBarWidget()
-        self.oldD3Title = self.dock2.titleBarWidget()
-        # self.dock1.setTitleBarWidget(self.noTitle1)
+        self.noTitle4 = QWidget()
+        # self.dock1.setTitleBarWidget(self.noTitle1)  # Dock1
         self.dock2.setTitleBarWidget(self.noTitle2)
         self.dock3.setTitleBarWidget(self.noTitle3)
+        self.dock4.setTitleBarWidget(self.noTitle4)
+        # Dockable Areas
         self.dock2.setAllowedAreas(Qt.AllDockWidgetAreas)
         self.dock3.setAllowedAreas(Qt.AllDockWidgetAreas)
-        # self.addDockWidget(Qt.RightDockWidgetArea, self.dock1)
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.dock3)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.dock2)
-        # Custom widget editPanel.py |> subTitleEdit
+        self.dock4.setAllowedAreas(Qt.AllDockWidgetAreas)
+        # Adding Dockable Widgets ----------------------------------------------------
+        # self.addDockWidget(Qt.RightDockWidgetArea, self.dock1)  # Video Player Panel
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.dock3)  # Subtitle Table Panel
+        self.addDockWidget(Qt.RightDockWidgetArea, self.dock2)  # Subtitle Editing Panel
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.dock4)  # Waveform Panel
+        self.tabifyDockWidget(self.dock3, self.dock4)
+        self.dock3.raise_()
+        # Panel Instances ------------------------------------------------------------
+        self.videoPanel = vlcPlayer()
         self.editPanel = subTitleEdit()
+        self.subTablePanel = subTitleTable()
+        self.setCentralWidget(self.videoPanel)
+        # self.dock1.setWidget(self.videoPanel)
         self.dock2.setWidget(self.editPanel)
-        # Custom widget dataPanel.py |> subTitleList
-        self.subTitleList = subTitleList()
-        self.dock3.setWidget(self.subTitleList)
+        self.dock3.setWidget(self.subTablePanel)
+        self.dock4.setWidget(QLabel("Under Construction"))
+        # Right Click Actions --------------------------------------------------------
         self.actShowT = QAction("Show TitleBar", self)
         self.actShowT.triggered.connect(self.showTitleBar)
         self.actHideT = QAction("Hide TitleBar", self)
         self.actHideT.triggered.connect(self.hideTitleBar)
-        # VLC Player
-        self.videoPanel = vlcPlayer()
+        # Signals & Slot Connections
         self.videoPanel.message.connect(self.updateStatusBar)
-        # self.dock1.setWidget(self.videoPanel)
-        self.setCentralWidget(self.videoPanel)
+        self.subTablePanel.verticalHeader().sectionDoubleClicked.connect(self.edit_row)
+        # Final Cleanup before show
         self.editPanel.subtitle.setFocus()
-        self.subTitleList.verticalHeader().sectionDoubleClicked.connect(self.edit_row)
-        self.re_editing = False
     
     def setup_shortcuts(self):
         shortcut_open = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_O), self)
@@ -107,17 +121,19 @@ class MainWindow(QMainWindow):
         # self.dock1.setTitleBarWidget(self.oldD1Title)
         self.dock2.setTitleBarWidget(self.oldD2Title)
         self.dock3.setTitleBarWidget(self.oldD3Title)
+        self.dock4.setTitleBarWidget(self.oldD4Title)
     
     def hideTitleBar(self):
         # self.dock1.setTitleBarWidget(self.noTitle1)
         self.dock2.setTitleBarWidget(self.noTitle2)
         self.dock3.setTitleBarWidget(self.noTitle3)
+        self.dock4.setTitleBarWidget(self.noTitle4)
         self.repaint()
     
     @Slot()
     def insert_new_subtitle(self):
         index = self.editPanel.no.value() - 1 # Starts at 1
-        numRows = self.subTitleList.rowCount()
+        numRows = self.subTablePanel.rowCount()
         tcIn = QTableWidgetItem(self.editPanel.tcIn.text())
         tcOut = QTableWidgetItem(self.editPanel.tcOut.text())
         sub = QTableWidgetItem(self.editPanel.subtitle.toPlainText())
@@ -125,20 +141,20 @@ class MainWindow(QMainWindow):
             # print(index, numRows)
             if index >= numRows:
                 # print("Everything is ok, can Insert")
-                self.subTitleList.setRowCount(index+1)
+                self.subTablePanel.setRowCount(index+1)
                 # Insert Row Data
-                self.subTitleList.setItem(numRows, 0, tcIn)
-                self.subTitleList.setItem(numRows, 1, tcOut)
-                self.subTitleList.setItem(numRows, 2, sub)
+                self.subTablePanel.setItem(numRows, 0, tcIn)
+                self.subTablePanel.setItem(numRows, 1, tcOut)
+                self.subTablePanel.setItem(numRows, 2, sub)
                 self.editPanel.no.setValue(index+2) # Increment Number
                 self.editPanel.tcIn.setText(tcOut.text())
         else:
-            self.subTitleList.setItem(index, 0, tcIn)
-            self.subTitleList.setItem(index, 1, tcOut)
-            self.subTitleList.setItem(index, 2, sub)
+            self.subTablePanel.setItem(index, 0, tcIn)
+            self.subTablePanel.setItem(index, 1, tcOut)
+            self.subTablePanel.setItem(index, 2, sub)
             self.editPanel.subtitle.clear()
             self.editPanel.no.setValue(numRows+1)
-            self.editPanel.tcIn.setText(self.subTitleList.item(numRows-1, 1).text())
+            self.editPanel.tcIn.setText(self.subTablePanel.item(numRows-1, 1).text())
             self.re_editing = False
         self.editPanel.subtitle.clear()
         self.editPanel.tcOut.setText("00000000")
@@ -161,26 +177,33 @@ class MainWindow(QMainWindow):
         if valid:
             fileName, ext = splitext(selected_file)
             if ext == ".txt":
-                with open(selected_file, 'w', encoding='utf-8') as fp:
-                    fp.write("<begin subtitles>\n\n")
-                    for i in range(self.subTitleList.rowCount()):
-                        tcIn = self.subTitleList.item(i, 0).text()
-                        tcOut = self.subTitleList.item(i, 1).text()
-                        sub = self.subTitleList.item(i, 2).text()
-                        fp.write(f"{tcIn} {tcOut}\n")
-                        fp.write(f"{sub}\n")
-                        fp.write("\n")
-                    fp.write("<end subtitles>")
+                self.saveAvidTxt(selected_file)
             elif ext == ".srt":
-                with open(selected_file, 'w', encoding='utf-8') as fp:
-                    for i in range(self.subTitleList.rowCount()):
-                        fp.write(f"{i+1}\n")
-                        tcIn = TimeCode(self.subTitleList.item(i, 0).text())
-                        tcOut = TimeCode(self.subTitleList.item(i, 1).text())
-                        sub = self.subTitleList.item(i, 2).text()
-                        fp.write(f"{tcIn.get_mstc()} --> {tcOut.get_mstc()}\n")
-                        fp.write(f"{sub}\n")
-                        fp.write("\n")
+                self.saveSrt(selected_file)
+            self.updateStatusBar(f"{selected_file} Exported!")
+    
+    def saveAvidTxt(self, filename):
+        with open(filename, 'w', encoding='utf-8') as fp:
+            fp.write("<begin subtitles>\n\n")
+            for i in range(self.subTablePanel.rowCount()):
+                tcIn = self.subTablePanel.item(i, 0).text()
+                tcOut = self.subTablePanel.item(i, 1).text()
+                sub = self.subTablePanel.item(i, 2).text()
+                fp.write(f"{tcIn} {tcOut}\n")
+                fp.write(f"{sub}\n")
+                fp.write("\n")
+            fp.write("<end subtitles>")
+    
+    def saveSrt(self, filename):
+        with open(filename, 'w', encoding='utf-8') as fp:
+            for i in range(self.subTablePanel.rowCount()):
+                fp.write(f"{i+1}\n")
+                tcIn = TimeCode(self.subTablePanel.item(i, 0).text())
+                tcOut = TimeCode(self.subTablePanel.item(i, 1).text())
+                sub = self.subTablePanel.item(i, 2).text()
+                fp.write(f"{tcIn.get_mstc()} --> {tcOut.get_mstc()}\n")
+                fp.write(f"{sub}\n")
+                fp.write("\n")
 
     @Slot()
     def import_project(self):
@@ -200,11 +223,11 @@ class MainWindow(QMainWindow):
     @Slot()
     def edit_row(self, row_number):
         self.editPanel.no.setValue(row_number+1)
-        self.editPanel.tcIn.setText(self.subTitleList.item(row_number, 0).text())
-        self.editPanel.tcOut.setText(self.subTitleList.item(row_number, 1).text())
+        self.editPanel.tcIn.setText(self.subTablePanel.item(row_number, 0).text())
+        self.editPanel.tcOut.setText(self.subTablePanel.item(row_number, 1).text())
         self.editPanel.calculate_duration()
         self.editPanel.subtitle.clear()
-        self.editPanel.subtitle.setText(self.subTitleList.item(row_number, 2).text())
+        self.editPanel.subtitle.setText(self.subTablePanel.item(row_number, 2).text())
         self.re_editing = True
 
 if __name__ == '__main__':
