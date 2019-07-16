@@ -1,4 +1,5 @@
 import sys
+import xml.etree.ElementTree as xmlET
 from PySide2.QtGui import QKeySequence
 from PySide2.QtCore import Qt, Slot
 from PySide2.QtWidgets import (QWidget, QApplication, QMainWindow, QDockWidget, 
@@ -9,9 +10,10 @@ from dataPanel import subTitleTable
 from timecode import TimeCode
 from os.path import splitext
 
-__version__ = "alpha Pre-Release"
-__major__ = 0
-__minor__ = 1
+
+__major__ = 1
+__minor__ = 0
+__version__ = f"Beta {__major__}.{__minor__}"
 
 
 class MainWindow(QMainWindow):
@@ -25,7 +27,7 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(50, 70)
         self.setWindowTitle(f"Angel SubTitle Pro ({__version__})")
         self.sb = self.statusBar() 
-        self.updateStatusBar(f"{__version__}.{__major__}.{__minor__}")
+        self.updateStatusBar(__version__)
         # Dockable Widgets -----------------------------------------------------------
         # self.dock1 = QDockWidget("Video Player", self) # Coverted to Central Widget
         self.dock2 = QDockWidget("Text Editing View", self)
@@ -162,16 +164,60 @@ class MainWindow(QMainWindow):
     
     @Slot()
     def open_project(self):
-        print("Opening project!")
-        # self.videoPanel.set_overlay_image()
+        # print("Opening project!")
+        file_dialog = QFileDialog(self, "Save as")
+        selected_file, valid = file_dialog.getOpenFileName()
+        if valid:
+            project = xmlET.parse(selected_file)
+            video_root = project.find("./video")
+            subtitle_root = project.find("./subtitle")
+            self.videoPanel.loadVideoFile(video_root.text)
+            self.clear_table()
+            self.editPanel.no.setValue(1)
+            for i, sub in enumerate(subtitle_root.findall("./en/sub")):
+                inTime, outTime, data = list(sub)
+                # print(i, inTime.text, outTime.text, data.text)
+                self.editPanel.tcIn.setText(inTime.text)
+                self.editPanel.tcOut.setText(outTime.text)
+                self.editPanel.subtitle.setText(data.text)
+                self.insert_new_subtitle()
+            
+    def clear_table(self):
+        for i in range(self.subTablePanel.rowCount()):
+                # print("removing, row", i)
+                self.subTablePanel.removeCellWidget(i, 0)
+                self.subTablePanel.removeCellWidget(i, 1)
+                self.subTablePanel.removeCellWidget(i, 2)
+        self.subTablePanel.setRowCount(0)
     
     @Slot()
     def save_project(self):
-        print("Saving project!")
+        # print("Saving project!")
+        file_dialog = QFileDialog(self, "Save as")
+        selected_file, valid = file_dialog.getSaveFileName()
+        if valid:
+            project = xmlET.Element("Angel_Subtitle_Pro_Project")
+            project.text = __version__
+            video_root = xmlET.SubElement(project, "video")
+            video_root.text = self.videoPanel.currVideoFile
+            subtitle_root = xmlET.SubElement(project, "subtitle")
+            sub_en = xmlET.SubElement(subtitle_root, "en")
+            sub_en.text = "English"
+            for i in range(self.subTablePanel.rowCount()):
+                curRow = xmlET.SubElement(sub_en, "sub")
+                tcIn = xmlET.SubElement(curRow, "intime")
+                tcIn.text = self.subTablePanel.item(i, 0).text()
+                tcOut = xmlET.SubElement(curRow, "outtime")
+                tcOut.text = self.subTablePanel.item(i, 1).text()
+                sub = xmlET.SubElement(curRow, "data")
+                sub.text = self.subTablePanel.item(i, 2).text()
+            with open(selected_file, 'w', encoding='utf-8') as fp:
+                fp.write(xmlET.tostring(project,  encoding="unicode",  method="xml"))
+
     
     @Slot()
     def export_project(self):  # Testing SubRip (SRT)
-        print("Exporting current project!")
+        # print("Exporting current project!")
         file_dialog = QFileDialog(self, "Save as")
         selected_file, valid = file_dialog.getSaveFileName()
         if valid:

@@ -44,6 +44,7 @@ class vlcPlayer(QWidget):
         self.vlc_instance = vlc.Instance("-q") # '--verbose 2'.split()
         self.mPlayer = self.vlc_instance.media_player_new()
         self.event_manager = self.mPlayer.event_manager()
+        self.currVideoFile = ""
         self.fileParsed = False
         self.isPlaying = False
         self.isSeekable = False
@@ -151,6 +152,7 @@ class vlcPlayer(QWidget):
         sleep(1) # Time to parse video
         if t_media.get_parsed_status() == vlc.MediaParsedStatus().done:
             self.fileParsed = True
+            self.currVideoFile = videoFile
             self.message.emit(f"{path.basename(videoFile)} Loaded!")
         self.dur = t_media.get_duration()/1000  # video duration in seconds
         self.video_duration = TimeCode()
