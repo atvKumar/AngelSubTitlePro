@@ -197,7 +197,8 @@ class MainWindow(QMainWindow):
                     self.editPanel.tcOut.setText(outTime.text)
                     self.editPanel.subtitle.setText(data.text)
                     self.insert_new_subtitle()
-                if not exists(f"{fileName}.srt"):
+                videofile, videoext = splitext(video_root.text)
+                if not exists(f"{videofile}.srt"):
                     self.setup_temp_subtitles()
             else:
                 self.updateStatusBar("Please select a valid Project File!")
@@ -313,7 +314,8 @@ class MainWindow(QMainWindow):
                 else:
                     # print(f"File not found {finalPath}")
                     self.updateStatusBar(f"File not found {finalPath}")
-                if not exists(f"{fileName}.srt"):
+                videofile, videoext = splitext(finalPath)
+                if not exists(f"{videofile}.srt"):
                     self.setup_temp_subtitles()
     
     @Slot()
