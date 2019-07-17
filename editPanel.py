@@ -157,6 +157,7 @@ class subTitleEdit(QWidget):
         self.tcOut.editingFinished.connect(self.calculate_duration)
         # Layout Operations
         self.setLayout(mainlayout)
+        self.setTabOrder(self.tcDur, self.subtitle)
         self.show()
     
     def setup_linedt_tc(self, ctrl):

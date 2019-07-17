@@ -8,7 +8,9 @@ from editPanel import subTitleEdit
 from videoPanel import vlcPlayer
 from dataPanel import subTitleTable
 from timecode import TimeCode
-from os.path import splitext
+from os.path import splitext, abspath, join, exists
+from copy import deepcopy
+from urllib.parse import urlparse
 
 
 __major__ = 1
@@ -165,22 +167,28 @@ class MainWindow(QMainWindow):
     @Slot()
     def open_project(self):
         # print("Opening project!")
-        file_dialog = QFileDialog(self, "Save as")
+        file_dialog = QFileDialog(self, "Open Project")
+        file_dialog.setNameFilter("AngelSubTitle Project Files (*.asp)")
+        file_dialog.setDefaultSuffix("asp")
         selected_file, valid = file_dialog.getOpenFileName()
         if valid:
-            project = xmlET.parse(selected_file)
-            video_root = project.find("./video")
-            subtitle_root = project.find("./subtitle")
-            self.videoPanel.loadVideoFile(video_root.text)
-            self.clear_table()
-            self.editPanel.no.setValue(1)
-            for i, sub in enumerate(subtitle_root.findall("./en/sub")):
-                inTime, outTime, data = list(sub)
-                # print(i, inTime.text, outTime.text, data.text)
-                self.editPanel.tcIn.setText(inTime.text)
-                self.editPanel.tcOut.setText(outTime.text)
-                self.editPanel.subtitle.setText(data.text)
-                self.insert_new_subtitle()
+            filename, ext = splitext(selected_file)
+            if ext == ".asp":
+                project = xmlET.parse(selected_file)
+                video_root = project.find("./video")
+                subtitle_root = project.find("./subtitle")
+                self.videoPanel.loadVideoFile(video_root.text)
+                self.clear_table()
+                self.editPanel.no.setValue(1)
+                for i, sub in enumerate(subtitle_root.findall("./en/sub")):
+                    inTime, outTime, data = list(sub)
+                    # print(i, inTime.text, outTime.text, data.text)
+                    self.editPanel.tcIn.setText(inTime.text)
+                    self.editPanel.tcOut.setText(outTime.text)
+                    self.editPanel.subtitle.setText(data.text)
+                    self.insert_new_subtitle()
+            else:
+                self.updateStatusBar("Please select a valid Project File!")
             
     def clear_table(self):
         for i in range(self.subTablePanel.rowCount()):
@@ -194,8 +202,14 @@ class MainWindow(QMainWindow):
     def save_project(self):
         # print("Saving project!")
         file_dialog = QFileDialog(self, "Save as")
+        file_dialog.setNameFilter("AngelSubTitle Project Files (*.asp)")
+        file_dialog.setDefaultSuffix("asp")
         selected_file, valid = file_dialog.getSaveFileName()
         if valid:
+            filename, ext = splitext(selected_file)
+            if ext != ".asp":
+                # print(join(filename+".asp"))
+                selected_file = f"{filename}.asp"
             project = xmlET.Element("Angel_Subtitle_Pro_Project")
             project.text = __version__
             video_root = xmlET.SubElement(project, "video")
@@ -213,6 +227,7 @@ class MainWindow(QMainWindow):
                 sub.text = self.subTablePanel.item(i, 2).text()
             with open(selected_file, 'w', encoding='utf-8') as fp:
                 fp.write(xmlET.tostring(project,  encoding="unicode",  method="xml"))
+            self.updateStatusBar(f"File saved {selected_file}")
 
     
     @Slot()
@@ -253,7 +268,39 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def import_project(self):
-        print("Importing File!")
+        file_dialog = QFileDialog(self, "Import File")
+        selected_file, valid = file_dialog.getOpenFileName()
+        if valid:
+            # print(f"Importing {selected_file}")
+            fileName, ext = splitext(selected_file)
+            if ext == ".xml":
+                self.clear_table()
+                self.editPanel.no.setValue(1)
+                project = xmlET.parse(selected_file)
+                # print(project.findall('.//generatoritem'))
+                for card in project.findall('.//generatoritem'):
+                    tcIn = TimeCode()
+                    tcOut = TimeCode()
+                    tcIn.setFrames(int(card[5].text))
+                    tcOut.setFrames(int(card[6].text))
+                    # print(tcIn.timecode, tcOut.timecode, card[10][6][2].text)
+                    try:
+                        sub = deepcopy(card[10][6][2].text)  # Standard FCP Outline Text
+                    except IndexError:
+                        sub = deepcopy(card[13][6][2].text)  # Texte avec bordure
+                    self.editPanel.tcIn.setText(tcIn.timecode)
+                    self.editPanel.tcOut.setText(tcOut.timecode)
+                    self.editPanel.subtitle.setText(sub)
+                    self.insert_new_subtitle()
+                videofile = project.find(".//media/video/track/clipitem/file/pathurl")
+                p = urlparse(videofile.text)
+                finalPath = abspath(join(p.netloc, p.path))
+                if exists(finalPath):
+                    # print(f"Loading {finalPath}")
+                    self.videoPanel.loadVideoFile(finalPath)
+                else:
+                    # print(f"File not found {finalPath}")
+                    self.updateStatusBar(f"File not found {finalPath}")
     
     @Slot()
     def set_intime(self):
