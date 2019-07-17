@@ -166,6 +166,13 @@ class MainWindow(QMainWindow):
         self.editPanel.subtitle.clear()
         self.editPanel.tcOut.setText("00000000")
         self.editPanel.tcDur.setText("00000000")
+        self.setup_temp_subtitles()
+    
+    def setup_temp_subtitles(self):
+        self.saveSrt(self.tmp)
+        print("Temp_File:", self.tmp)
+        if self.videoPanel.fileParsed:
+            self.videoPanel.set_subtitle_file(self.tmp)
     
     @Slot()
     def open_project(self):
@@ -190,6 +197,8 @@ class MainWindow(QMainWindow):
                     self.editPanel.tcOut.setText(outTime.text)
                     self.editPanel.subtitle.setText(data.text)
                     self.insert_new_subtitle()
+                if not exists(f"{fileName}.srt"):
+                    self.setup_temp_subtitles()
             else:
                 self.updateStatusBar("Please select a valid Project File!")
             
@@ -304,6 +313,8 @@ class MainWindow(QMainWindow):
                 else:
                     # print(f"File not found {finalPath}")
                     self.updateStatusBar(f"File not found {finalPath}")
+                if not exists(f"{fileName}.srt"):
+                    self.setup_temp_subtitles()
     
     @Slot()
     def set_intime(self):
