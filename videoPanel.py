@@ -159,6 +159,20 @@ class vlcPlayer(QWidget):
         self.video_duration.setSecs(self.dur)
         # self.video_slider.setMaximum(floor(self.dur))
         self.tcPos.setText(self.video_duration.getTimeCode())
+        # self.set_subtitle_file("/Users/promo3/Desktop/PHB0138.srt")
+
+    def set_subtitle_file(self, filename)->bool:
+        final_path = f"file://{filename}"  # https://github.com/caprica/vlcj/issues/497
+        # 0 for subtitle 1 for audio vlc.MediaSlaveType(0)
+        x = vlc.libvlc_media_player_add_slave(self.mPlayer, 0, str_to_bytes(final_path), True)
+        if x == 0:
+            return True
+        else:
+            return False
+    
+    def get_video_size(self):
+        if self.fileParsed:
+            return vlc.libvlc_video_get_size(self.mPlayer, 0)
     
     def getPosition(self):  # More accurate video position
         newPos = self.mPlayer.get_time()/1000

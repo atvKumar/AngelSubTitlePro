@@ -11,6 +11,7 @@ from timecode import TimeCode
 from os.path import splitext, abspath, join, exists
 from copy import deepcopy
 from urllib.parse import urlparse
+from tempfile import NamedTemporaryFile
 
 
 __major__ = 1
@@ -24,6 +25,8 @@ class MainWindow(QMainWindow):
         self.re_editing = False
         self.initUI()
         self.setup_shortcuts()
+        self._tmp = NamedTemporaryFile(suffix=".srt")
+        self.tmp = self._tmp.name
     
     def initUI(self):
         self.setMinimumSize(50, 70)
@@ -322,6 +325,10 @@ class MainWindow(QMainWindow):
         self.editPanel.subtitle.clear()
         self.editPanel.subtitle.setText(self.subTablePanel.item(row_number, 2).text())
         self.re_editing = True
+    
+    def closeEvent(self, event):
+        # print("closing now!")
+        self._tmp.close()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
