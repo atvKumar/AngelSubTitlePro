@@ -337,6 +337,7 @@ class MainWindow(QMainWindow):
         self.editPanel.calculate_duration()
         self.editPanel.subtitle.clear()
         self.editPanel.subtitle.setText(self.subTablePanel.item(row_number, 2).text())
+        self.editPanel.clearStyles()
         self.re_editing = True
     
     def closeEvent(self, event):
