@@ -129,7 +129,7 @@ class TimeCode(object):
         rtn.setFrames(total_frames)
         return rtn
 
-    def __div__(self, other):
+    def __truediv__(self, other):
         rtn = TimeCode()
         total_frames = 0
         if isinstance(other, int):

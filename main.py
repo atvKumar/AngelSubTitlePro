@@ -79,6 +79,8 @@ class MainWindow(QMainWindow):
         # Signals & Slot Connections
         self.videoPanel.message.connect(self.updateStatusBar)
         self.subTablePanel.verticalHeader().sectionDoubleClicked.connect(self.edit_row)
+        self.subTablePanel.row_deleted.connect(self.row_deleted_update)
+        self.subTablePanel.row_added.connect(self.row_added_update)
         # Final Cleanup before show
         self.editPanel.subtitle.setFocus()
     
@@ -210,6 +212,14 @@ class MainWindow(QMainWindow):
                 self.subTablePanel.removeCellWidget(i, 1)
                 self.subTablePanel.removeCellWidget(i, 2)
         self.subTablePanel.setRowCount(0)
+    
+    @Slot()
+    def row_deleted_update(self):
+        self.editPanel.no.setValue(self.editPanel.no.value()-1)
+    
+    @Slot()
+    def row_added_update(self):
+        self.editPanel.no.setValue(self.editPanel.no.value()+1)
     
     @Slot()
     def save_project(self):
