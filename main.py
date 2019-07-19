@@ -7,6 +7,7 @@ QSizePolicy, QLabel, QMenu, QAction, QTableWidgetItem, QShortcut, QFileDialog)
 from editPanel import subTitleEdit
 from videoPanel import vlcPlayer
 from dataPanel import subTitleTable
+from waveformPanel import waveform
 from timecode import TimeCode
 from os.path import splitext, abspath, join, exists
 from copy import deepcopy
@@ -68,10 +69,12 @@ class MainWindow(QMainWindow):
         self.editPanel = subTitleEdit()
         self.subTablePanel = subTitleTable()
         self.setCentralWidget(self.videoPanel)
+        self.waveFormPanel = waveform()
         # self.dock1.setWidget(self.videoPanel)
         self.dock2.setWidget(self.editPanel)
         self.dock3.setWidget(self.subTablePanel)
-        self.dock4.setWidget(QLabel("Under Construction"))
+        # self.dock4.setWidget(QLabel("Under Construction"))
+        self.dock4.setWidget(self.waveFormPanel)
         # Right Click Actions --------------------------------------------------------
         self.actShowT = QAction("Show TitleBar", self)
         self.actShowT.triggered.connect(self.showTitleBar)
@@ -82,6 +85,8 @@ class MainWindow(QMainWindow):
         self.subTablePanel.verticalHeader().sectionDoubleClicked.connect(self.edit_row)
         self.subTablePanel.row_deleted.connect(self.row_deleted_update)
         self.subTablePanel.row_added.connect(self.row_added_update)
+        self.waveFormPanel.file_loaded.connect(self.updateStatusBar)
+        
         # Final Cleanup before show
         self.editPanel.subtitle.setFocus()
     
