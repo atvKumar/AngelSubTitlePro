@@ -27,6 +27,7 @@ class MainWindow(QMainWindow):
         self.setup_shortcuts()
         self._tmp = NamedTemporaryFile(suffix=".srt")
         self.tmp = self._tmp.name
+        self.importing = False
     
     def initUI(self):
         self.setMinimumSize(50, 70)
@@ -168,7 +169,8 @@ class MainWindow(QMainWindow):
         self.editPanel.subtitle.clear()
         self.editPanel.tcOut.setText("00000000")
         self.editPanel.tcDur.setText("00000000")
-        self.setup_temp_subtitles()
+        if not self.importing:
+            self.setup_temp_subtitles()
     
     def setup_temp_subtitles(self):
         self.saveSrt(self.tmp)
@@ -294,6 +296,7 @@ class MainWindow(QMainWindow):
         file_dialog = QFileDialog(self, "Import File")
         selected_file, valid = file_dialog.getOpenFileName()
         if valid:
+            self.importing = True
             # print(f"Importing {selected_file}")
             fileName, ext = splitext(selected_file)
             if ext == ".xml":
@@ -327,6 +330,8 @@ class MainWindow(QMainWindow):
                 videofile, videoext = splitext(finalPath)
                 if not exists(f"{videofile}.srt"):
                     self.setup_temp_subtitles()
+            self.importing = False
+            self.saveSrt(self.tmp)
     
     @Slot()
     def set_intime(self):
