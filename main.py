@@ -1,4 +1,4 @@
-import sys
+import sys, os
 import xml.etree.ElementTree as xmlET
 from PySide2.QtGui import QKeySequence
 from PySide2.QtCore import Qt, Slot
@@ -26,7 +26,7 @@ class MainWindow(QMainWindow):
         self.re_editing = False
         self.initUI()
         self.setup_shortcuts()
-        self._tmp = NamedTemporaryFile(suffix=".srt")
+        self._tmp = NamedTemporaryFile(suffix=".srt", delete=False)
         self.tmp = self._tmp.name
         self.importing = False
     
@@ -363,6 +363,7 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         # print("closing now!")
         self._tmp.close()
+        os.unlink(self._tmp.name)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
