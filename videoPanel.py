@@ -1,5 +1,4 @@
 from os import path
-from urllib.parse import urlparse
 from math import floor
 from time import sleep
 from PySide2.QtWidgets import (QWidget, QLabel, QVBoxLayout, QPushButton, 
@@ -26,9 +25,8 @@ class video_frame(QLabel):
 
     def dragEnterEvent(self, e):
         file_url = e.mimeData().text()
-        p = urlparse(file_url)
-        self.finalPath = path.abspath(path.join(p.netloc, p.path))
-        if path.exists(self.finalPath):
+        self.finalPath = file_url[8::] if sys.platform == 'win32' else file_url[7::]
+        if e.mimeData().hasUrls() and path.exists(self.finalPath):
             e.accept()
         else:
             e.ignore()
