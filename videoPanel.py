@@ -41,7 +41,7 @@ class vlcPlayer(QWidget):
     message = Signal(str)
     def __init__(self):
         super(vlcPlayer, self).__init__()
-        self.vlc_instance = vlc.Instance("-q") # '--verbose 2'.split()
+        self.vlc_instance = vlc.Instance('-q') # '--verbose 2'.split()
         self.mPlayer = self.vlc_instance.media_player_new()
         self.event_manager = self.mPlayer.event_manager()
         self.currVideoFile = ""
