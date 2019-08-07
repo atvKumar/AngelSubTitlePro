@@ -86,6 +86,7 @@ class MainWindow(QMainWindow):
         self.subTablePanel.row_deleted.connect(self.row_deleted_update)
         self.subTablePanel.row_added.connect(self.row_added_update)
         self.waveFormPanel.file_loaded.connect(self.updateStatusBar)
+        self.waveFormPanel.selectionCtrl.sigRegionChangeFinished.connect(self.processWaveformSelection)
         
         # Final Cleanup before show
         self.editPanel.subtitle.setFocus()
@@ -360,6 +361,27 @@ class MainWindow(QMainWindow):
         self.editPanel.clearStyles()
         self.re_editing = True
     
+    def map(self, value, low1, high1, low2, high2):  # Value Remap function
+        return low2 + (value - low1) * (high2 - low2) / (high1 - low1)
+
+    def processWaveformSelection(self):
+        try:
+            wavIn, wavOut = self.waveFormPanel.selectionCtrl.getRegion()
+            total_audio_frames = self.waveFormPanel.getTotalAudioFrames()
+            total_video_frames = self.videoPanel.video_duration.frames
+            x = self.map(int(wavIn), 0, total_audio_frames/100, 0, total_video_frames)  # Because audio filtering
+            y = self.map(int(wavOut), 0, total_audio_frames/100, 0, total_video_frames)  # of 100 in wavformPanel.py Line 83
+            selIn = TimeCode()
+            selIn.setFrames(int(x))
+            selOut = TimeCode()
+            selOut.setFrames(int(y))
+            # print("Selected ->", wavIn, wavOut, "->", x, y, "->",selIn, selOut, "->", selIn.frames, selOut.frames)
+            self.editPanel.tcIn.setText(selIn.timecode)
+            self.editPanel.tcOut.setText(selOut.timecode)
+            self.editPanel.calculate_duration()
+        except AttributeError:
+            print("please make sure you have a video and audio file loaded!")
+
     def closeEvent(self, event):
         # print("closing now!")
         self._tmp.close()

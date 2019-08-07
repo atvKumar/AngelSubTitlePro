@@ -21,13 +21,21 @@ class waveform(QWidget):
         self.pw = pg.PlotWidget()
         self.pw.plot([1,2,3,4], pen='b')
         layout.addWidget(self.pw)
+        self.selectionCtrl = pg.LinearRegionItem([50,10000])
+        self.selectionCtrl.setZValue(-10)
         self.loadAudioAction = QAction("Load Audio File (*.wav)", self)
         self.loadAudioAction.triggered.connect(self.load_wavFile)
+        self.selectRegion = QAction("Select Region", self)
+        self.selectRegion.triggered.connect(self.activateRegion)
+        self.remSelection = QAction("Disable Selection", self)
+        self.remSelection.triggered.connect(self.deactivateRegion)
 
     def contextMenuEvent(self, event):
         # print("Right Clicked!", event)
         menu = QMenu(self)
         menu.addAction(self.loadAudioAction)
+        menu.addAction(self.selectRegion)
+        menu.addAction(self.remSelection)
         menu.exec_(event.globalPos())
     
     def _wav2array(self, nchannels, sampwidth, data):  # From wavio https://github.com/WarrenWeckesser/wavio/blob/master/wavio.py
@@ -83,3 +91,12 @@ class waveform(QWidget):
                     self.pw.getPlotItem().clear()
                     self.pw.plot(left_mono_track, pen='b')
                     self.file_loaded.emit(f"{selected_file} Loaded!")
+
+    def activateRegion(self):
+        self.pw.addItem(self.selectionCtrl)
+    
+    def deactivateRegion(self):
+        self.pw.removeItem(self.selectionCtrl)
+    
+    def getTotalAudioFrames(self):
+        return self._waveFile['nframes']
