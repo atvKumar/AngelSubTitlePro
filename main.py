@@ -69,7 +69,7 @@ class MainWindow(QMainWindow):
         self.editPanel = subTitleEdit()
         self.subTablePanel = subTitleTable()
         self.setCentralWidget(self.videoPanel)
-        self.waveFormPanel = waveform()
+        self.waveFormPanel = waveform(self)
         # self.dock1.setWidget(self.videoPanel)
         self.dock2.setWidget(self.editPanel)
         self.dock3.setWidget(self.subTablePanel)
@@ -90,6 +90,15 @@ class MainWindow(QMainWindow):
         
         # Final Cleanup before show
         self.editPanel.subtitle.setFocus()
+    
+    def isVideoParsed(self):
+        return self.videoPanel.fileParsed
+    
+    def getVideoFilePath(self):
+        if self.isVideoParsed():
+            return self.videoPanel.currVideoFile
+        else:
+            return None
     
     def setup_shortcuts(self):
         shortcut_open = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_O), self)
