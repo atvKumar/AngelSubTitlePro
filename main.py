@@ -15,7 +15,7 @@ from urllib.parse import urlparse
 from tempfile import NamedTemporaryFile
 
 
-__major__ = 1
+__major__ = 2
 __minor__ = 0
 __version__ = f"Beta {__major__}.{__minor__}"
 

@@ -9,7 +9,7 @@ a = Analysis(['main.py'],
                         ('C:\\Program Files\\VideoLAN\\VLC\\libvlccore.dll', '.'),
                         ('C:\\Users\\MO7\\AppData\\Local\\Programs\\Python\\Python37-32\\Lib\\site-packages\\shiboken2\\shiboken2.abi3.dll', '.'),
                         ('C:\\Users\\MO7\\AppData\\Local\\Programs\\Python\\Python37-32\\Lib\\site-packages\\shiboken2\\msvcp140.dll', '.')]
-                        if sys.platform == 'win32' else [],
+                        if sys.platform == 'win32' else [('utils/ffmpeg', 'utils/')],
              datas=[('icons/*.png', 'icons/'), ('dictionary/*.txt', 'dictionary/')],
              hiddenimports=['numpy.random.common', 'numpy.random.bounded_integers', 'numpy.random.entropy'],
              hookspath=[],
@@ -30,7 +30,7 @@ exe = EXE(pyz,
           bootloader_ignore_signals=False,
           strip=False,
           upx=True,
-          console=True if sys.platform == 'win32' else False )
+          console=True)
 
 coll = COLLECT(exe,
                a.binaries,
