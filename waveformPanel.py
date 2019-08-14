@@ -7,7 +7,7 @@ import wave, subprocess, sys
 from time import sleep
 from videoPanel import resource_path
 
-FFMPEG = resource_path("utils/ffmpeg")
+FFMPEG = resource_path("utils/ffmpeg").replace(' ', '\ ')
 
 class waveform(QWidget):
     file_loaded = Signal(str)
