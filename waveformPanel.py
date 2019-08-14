@@ -82,14 +82,24 @@ class waveform(QWidget):
                 # print(data)
                 if self._waveFile['nchannels'] > 1:
                     _mL = data[:,0] # Vertical Slice L
+                    _mR = data[:,1] # Vertical Slice R
                     left_mono_track = _mL[::100].copy()  # Filter 100th Sample
+                    right_mono_track = _mR[::100].copy()
                     del data  # Delete from Memory
                     left_mono_track = left_mono_track.astype(float)  # Convert to float
+                    right_mono_track = right_mono_track.astype(float)  # Convert to float
                     # _np.savetxt("/Users/promo3/Desktop/test.csv", left_mono_track ,delimiter=",")
                     # left_mono_track = _np.loadtxt("/Users/promo3/Desktop/test.csv", delimiter=",")
                     left_mono_track /= _np.max(_np.abs(left_mono_track), axis=0) # normalise to -1 - 1
+                    left_mono_track *= 0.01
+                    left_mono_track += 0.005  # Shift Up
+                    right_mono_track /= _np.max(_np.abs(right_mono_track), axis=0) # normalise to -1 - 1
+                    right_mono_track *= 0.01
+                    right_mono_track += -0.005  # Shift Down
                     self.pw.getPlotItem().clear()
+                    self.pw.setYRange(min=-0.5, max=0.5)
                     self.pw.plot(left_mono_track, pen='b')
+                    self.pw.plot(right_mono_track, pen='b')
                     self.file_loaded.emit(f"{selected_file} Loaded!")
 
     def activateRegion(self):
